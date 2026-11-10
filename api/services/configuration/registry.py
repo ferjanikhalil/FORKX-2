@@ -15,6 +15,11 @@ from pydantic import (
 )
 
 from api.services.configuration.options import (
+    PUNICA_LLM_MODELS,
+    PUNICA_STT_LANGUAGES,
+    PUNICA_STT_MODELS,
+    PUNICA_TTS_MODELS,
+    PUNICA_TTS_VOICES,
     AZURE_EMBEDDING_MODELS,
     AZURE_MODELS,
     AZURE_REALTIME_API_VERSIONS,
@@ -125,6 +130,7 @@ class ServiceProviders(str, Enum):
     LMNT = "lmnt"
     SPEECHIFY = "speechify"
     SONIOX = "soniox"
+    PUNICA = "punica"
 
 
 @dataclass(frozen=True)
@@ -186,6 +192,7 @@ class BaseServiceConfiguration(BaseModel):
         ServiceProviders.LMNT,
         ServiceProviders.SPEECHIFY,
         ServiceProviders.SONIOX,
+        ServiceProviders.PUNICA,
     ]
     api_key: str | list[str]
 
@@ -495,6 +502,14 @@ AWS_NOVA_SONIC_PROVIDER = Provider(
     ),
 )
 
+PUNICA_API_BASE_URL = "https://punica.tn/api/v1"
+PUNICA_PROVIDER = Provider(
+    "punica",
+    "Punica AI",
+    description="Tunisian AI platform providing Derja language models (Hannibal), transcription (Fennec), and speech synthesis (Dido).",
+    provider_docs_url="https://punica.tn/docs",
+)
+
 OPENAI_MODELS = [
     "gpt-4.1",
     "gpt-4.1-mini",
@@ -551,6 +566,21 @@ class OpenAILLMService(BaseChatLLMConfiguration):
     base_url: str = Field(
         default="https://api.openai.com/v1",
         description="Override only if using an OpenAI-compatible API (e.g. local LLM, proxy).",
+    )
+
+
+@register_llm(provider=PUNICA_PROVIDER)
+class PunicaLLMConfiguration(BaseChatLLMConfiguration):
+    temperature: float | None = temperature_field("punica", 0.7)
+    provider: Literal[ServiceProviders.PUNICA] = ServiceProviders.PUNICA
+    model: str = Field(
+        default="hannibal",
+        description="Punica chat model to use.",
+        json_schema_extra={"examples": list(PUNICA_LLM_MODELS), "allow_custom_input": True},
+    )
+    base_url: str = Field(
+        default=PUNICA_API_BASE_URL,
+        description="Punica OpenAI-compatible API endpoint.",
     )
 
 
@@ -1244,6 +1274,7 @@ LLMConfig = Annotated[
         HuggingFaceLLMConfiguration,
         MiniMaxLLMConfiguration,
         SarvamLLMConfiguration,
+        PunicaLLMConfiguration,
     ],
     Field(discriminator="provider"),
 ]
@@ -1495,6 +1526,25 @@ class GoogleTTSConfiguration(BaseTTSConfiguration):
 
 
 OPENAI_TTS_MODELS = ["gpt-4o-mini-tts"]
+
+
+@register_tts(provider=PUNICA_PROVIDER)
+class PunicaTTSConfiguration(BaseTTSConfiguration):
+    provider: Literal[ServiceProviders.PUNICA] = ServiceProviders.PUNICA
+    model: str = Field(
+        default="dido",
+        description="Punica TTS model.",
+        json_schema_extra={"examples": list(PUNICA_TTS_MODELS)},
+    )
+    voice: str = Field(
+        default="dido",
+        description="Punica TTS voice name.",
+        json_schema_extra={"examples": list(PUNICA_TTS_VOICES), "allow_custom_input": True},
+    )
+    base_url: str = Field(
+        default=PUNICA_API_BASE_URL,
+        description="Punica API endpoint.",
+    )
 
 
 @register_tts(provider=OPENAI_PROVIDER)
@@ -2019,6 +2069,7 @@ TTSConfig = Annotated[
         XAITTSConfiguration,
         LmntTTSConfiguration,
         SpeechifyTTSConfiguration,
+        PunicaTTSConfiguration,
     ],
     Field(discriminator="provider"),
 ]
@@ -2120,6 +2171,25 @@ class CartesiaSTTConfiguration(BaseSTTConfiguration):
 
 
 OPENAI_STT_MODELS = ["gpt-4o-transcribe"]
+
+
+@register_stt(provider=PUNICA_PROVIDER)
+class PunicaSTTConfiguration(BaseSTTConfiguration):
+    provider: Literal[ServiceProviders.PUNICA] = ServiceProviders.PUNICA
+    model: str = Field(
+        default="fennec",
+        description="Punica transcription model.",
+        json_schema_extra={"examples": list(PUNICA_STT_MODELS)},
+    )
+    language: str | None = Field(
+        default=None,
+        description="Optional primary recognition language (ar or fr).",
+        json_schema_extra={"examples": list(PUNICA_STT_LANGUAGES), "allow_custom_input": True},
+    )
+    base_url: str = Field(
+        default=PUNICA_API_BASE_URL,
+        description="Punica API endpoint.",
+    )
 
 
 @register_stt(provider=OPENAI_PROVIDER)
@@ -2508,6 +2578,7 @@ STTConfig = Annotated[
         AzureSpeechSTTConfiguration,
         SmallestAISTTConfiguration,
         ElevenlabsSTTConfiguration,
+        PunicaSTTConfiguration,
     ],
     Field(discriminator="provider"),
 ]

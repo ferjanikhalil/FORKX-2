@@ -32,6 +32,8 @@ from api.services.configuration.registry import (
 )
 from api.services.configuration.temperature import resolve_temperature
 from api.services.pipecat.fallback_llm import FallbackLLMProcessor, FallbackRoute
+from api.services.pipecat.punica_llm import PunicaLLMService
+from api.services.pipecat.punica_tts import PunicaTTSService
 from api.services.pipecat.gemini_json_schema_adapter import (
     DograhGeminiJSONSchemaAdapter,
 )
@@ -657,6 +659,15 @@ def create_stt_service(
             should_interrupt=False,  # Let UserAggregator take care of sending InterruptionFrame
             sample_rate=audio_config.transport_in_sample_rate,
         )
+    elif user_config.stt.provider == ServiceProviders.PUNICA.value:
+        base_url = getattr(user_config.stt, "base_url", None) or "https://punica.tn/api/v1"
+        _validate_runtime_service_url(base_url, "base_url")
+        return OpenAISTTService(
+            api_key=user_config.stt.api_key,
+            settings=OpenAISTTSettings(model=user_config.stt.model),
+            base_url=base_url,
+            should_interrupt=False,
+        )
     elif user_config.stt.provider == ServiceProviders.OPENAI.value:
         kwargs = {}
         base_url = getattr(user_config.stt, "base_url", None)
@@ -923,12 +934,34 @@ def create_tts_service(
             skip_aggregator_types=["recording_router", "recording"],
             silence_time_s=1.0,
         )
+    elif user_config.tts.provider == ServiceProviders.PUNICA.value:
+        base_url = getattr(user_config.tts, "base_url", None) or "https://punica.tn/api/v1"
+        _validate_runtime_service_url(base_url, "base_url")
+        return PunicaTTSService(
+            api_key=user_config.tts.api_key,
+            base_url=base_url,
+            model=user_config.tts.model,
+            voice=user_config.tts.voice,
+            text_filters=[xml_function_tag_filter],
+            skip_aggregator_types=["recording_router", "recording"],
+            silence_time_s=1.0,
+        )
     elif user_config.tts.provider == ServiceProviders.OPENAI.value:
         kwargs = {}
         base_url = getattr(user_config.tts, "base_url", None)
         if base_url:
             _validate_runtime_service_url(base_url, "base_url")
             kwargs["base_url"] = base_url
+            if "punica.tn" in base_url:
+                return PunicaTTSService(
+                    api_key=user_config.tts.api_key,
+                    base_url=base_url,
+                    model=user_config.tts.model,
+                    voice=user_config.tts.voice,
+                    text_filters=[xml_function_tag_filter],
+                    skip_aggregator_types=["recording_router", "recording"],
+                    silence_time_s=1.0,
+                )
         return OpenAITTSService(
             api_key=user_config.tts.api_key,
             sample_rate=OPENAI_SAMPLE_RATE,
@@ -1394,7 +1427,10 @@ def create_llm_service_from_provider(
     if provider in (
         ServiceProviders.OPENAI.value,
         ServiceProviders.ATLASCLOUD.value,
+        ServiceProviders.PUNICA.value,
     ):
+        if provider == ServiceProviders.PUNICA.value and not base_url:
+            base_url = "https://punica.tn/api/v1"
         # Voicemail and QA configs with their own provider pass no base_url;
         # without this default the OpenAI client sends the Atlas Cloud key to OpenAI.
         if provider == ServiceProviders.ATLASCLOUD.value and not base_url:
@@ -1411,6 +1447,13 @@ def create_llm_service_from_provider(
                     model=model,
                     extra={"reasoning_effort": "minimal", "verbosity": "low"},
                 ),
+                **kwargs,
+            )
+        if provider == ServiceProviders.PUNICA.value or (base_url and "punica.tn" in base_url):
+            return PunicaLLMService(
+                enable_direct_mode=enable_direct_mode,
+                api_key=api_key,
+                settings=OpenAILLMSettings(model=model, **sampling_settings),
                 **kwargs,
             )
         return OpenAILLMService(
@@ -1908,6 +1951,7 @@ def _create_single_llm_service(
     if provider in (
         ServiceProviders.OPENAI.value,
         ServiceProviders.ATLASCLOUD.value,
+        ServiceProviders.PUNICA.value,
     ):
         kwargs["base_url"] = user_config.llm.base_url
     elif provider == ServiceProviders.OPENROUTER.value:

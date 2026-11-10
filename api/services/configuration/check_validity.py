@@ -13,6 +13,7 @@ from api.schemas.ai_model_configuration import (
     EffectiveAIModelConfiguration,
 )
 from api.services.configuration.registry import (
+    PUNICA_API_BASE_URL,
     HOPPER_API_BASE_URL,
     ServiceConfig,
     ServiceProviders,
@@ -37,11 +38,13 @@ class APIKeyStatusResponse(TypedDict):
 
 
 _OPENAI_COMPATIBLE_PROVIDER_NAMES = {
+    ServiceProviders.PUNICA.value: "Punica AI",
     ServiceProviders.ATLASCLOUD.value: "Atlas Cloud",
     ServiceProviders.HOPPER.value: "Hopper",
 }
 
 _OPENAI_COMPATIBLE_PROVIDER_BASE_URLS = {
+    ServiceProviders.PUNICA.value: PUNICA_API_BASE_URL,
     ServiceProviders.HOPPER.value: HOPPER_API_BASE_URL,
 }
 
@@ -51,6 +54,7 @@ class UserConfigurationValidator:
         self._dograh_service_key_validation_cache: dict[str, bool] = {}
         self._validator_map = {
             ServiceProviders.OPENAI.value: self._check_openai_api_key,
+            ServiceProviders.PUNICA.value: self._check_openai_api_key,
             ServiceProviders.ATLASCLOUD.value: self._check_openai_api_key,
             ServiceProviders.HOPPER.value: self._check_openai_api_key,
             ServiceProviders.DEEPGRAM.value: self._check_deepgram_api_key,

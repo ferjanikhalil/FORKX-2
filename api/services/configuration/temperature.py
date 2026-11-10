@@ -78,6 +78,10 @@ TEMPERATURE_POLICIES = {
         "docs_url": "https://developers.openai.com/api/reference/resources/chat",
         "model_constraints": [OPENAI_REASONING_RULE],
     },
+    "punica": {
+        "maximum": 2.0,
+        "docs_url": "https://punica.tn/docs",
+    },
     "atlascloud": {
         "maximum": 2.0,
         "docs_url": "https://www.atlascloud.ai/models/deepseek-ai/deepseek-v4-pro",
