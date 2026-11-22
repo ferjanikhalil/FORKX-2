@@ -24,6 +24,7 @@ venv/
 .playwright-mcp
 coturn/
 *.wav
+!records/*.wav
 dograh_pcm_cache/
 node_modules/
 
