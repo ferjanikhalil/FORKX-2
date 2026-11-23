@@ -1,17 +1,5 @@
 [
   {
-    "id": "BOX_01A_stem",
-    "filename": "BOX_01A_greeting_warm_stem.wav",
-    "scenario": "Scenario 1: Standard Call Opening (Warm)",
-    "part": "Part 1: Call Opening & Identity Verification",
-    "text": "عسلامة، نهارك زين! معاك خدمة الحرفاء، بالله معاي",
-    "arabizi": "Aslema, nharek zin! M3ak khedmet el horafa, billahi m3aya",
-    "meaning": "Hello, have a great day! Customer service here, am I speaking with",
-    "type": "STATIC STEM",
-    "duration_seconds": 3.55,
-    "file_size_bytes": 170294
-  },
-  {
     "id": "BOX_01A_full",
     "filename": "BOX_01A_greeting_warm_question.wav",
     "scenario": "Scenario 1: Standard Call Opening (Warm Complete)",
@@ -20,8 +8,20 @@
     "arabizi": "Aslema, nharek zin! M3ak khedmet el horafa, billahi m3aya?",
     "meaning": "Hello, have a great day! Customer service here, am I speaking with [Name]?",
     "type": "STATIC CLIP",
-    "duration_seconds": 2.77,
-    "file_size_bytes": 133042
+    "duration_seconds": 2.69,
+    "file_size_bytes": 129164
+  },
+  {
+    "id": "BOX_01A_stem",
+    "filename": "BOX_01A_greeting_warm_stem.wav",
+    "scenario": "Scenario 1: Standard Call Opening (Warm)",
+    "part": "Part 1: Call Opening & Identity Verification",
+    "text": "عسلامة، نهارك زين! معاك خدمة الحرفاء، بالله معاي",
+    "arabizi": "Aslema, nharek zin! M3ak khedmet el horafa, billahi m3aya",
+    "meaning": "Hello, have a great day! Customer service here, am I speaking with",
+    "type": "STATIC STEM",
+    "duration_seconds": 3.48,
+    "file_size_bytes": 167084
   },
   {
     "id": "BOX_01B_stem",
@@ -32,8 +32,20 @@
     "arabizi": "Aslema, marhba bik! Billahi netkallem m3a",
     "meaning": "Hello, welcome! Am I speaking with",
     "type": "STATIC STEM",
-    "duration_seconds": 2.53,
-    "file_size_bytes": 121354
+    "duration_seconds": 2.49,
+    "file_size_bytes": 119564
+  },
+  {
+    "id": "BOX_01C_female_stem",
+    "filename": "BOX_01C_greeting_formal_female_stem.wav",
+    "scenario": "Scenario 1: Standard Call Opening (Formal Female)",
+    "part": "Part 1: Call Opening & Identity Verification",
+    "text": "السلام عليكم، سامحنا على الإزعاج، بالله معاي المدام",
+    "arabizi": "Assalamu alaykum, samahna 3al iz3aj, billahi m3aya el madame",
+    "meaning": "Peace be upon you, pardon the interruption, am I speaking with Mrs./Ms.",
+    "type": "STATIC STEM",
+    "duration_seconds": 3.86,
+    "file_size_bytes": 185324
   },
   {
     "id": "BOX_01C_stem",
@@ -44,8 +56,8 @@
     "arabizi": "Assalamu alaykum, samahna 3al iz3aj, billahi m3aya essayed",
     "meaning": "Peace be upon you, pardon the interruption, am I speaking with Mr.",
     "type": "STATIC STEM",
-    "duration_seconds": 3.99,
-    "file_size_bytes": 191640
+    "duration_seconds": 3.88,
+    "file_size_bytes": 186284
   },
   {
     "id": "BOX_01D_stem",
@@ -56,8 +68,8 @@
     "arabizi": "Aslema! M3aya",
     "meaning": "Hello! Is [Name] with me",
     "type": "STATIC STEM",
-    "duration_seconds": 1.58,
-    "file_size_bytes": 75972
+    "duration_seconds": 1.5,
+    "file_size_bytes": 72044
   },
   {
     "id": "BOX_02A",
@@ -68,8 +80,8 @@
     "arabizi": "Y3aychek w marhba bik! Nkallem fik bech nthabtou m3a b3adhna el commande elli 3additha 3andna.",
     "meaning": "Thank you and welcome! I'm calling to verify the order you placed with us.",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.37,
-    "file_size_bytes": 257612
+    "duration_seconds": 5.09,
+    "file_size_bytes": 244364
   },
   {
     "id": "BOX_02B",
@@ -80,8 +92,8 @@
     "arabizi": "Mriguel y3aychek! Juste tathbit sghir fil commande mte3ek:",
     "meaning": "Great, thank you! Just a quick verification of your order:",
     "type": "STATIC CLIP",
-    "duration_seconds": 3.76,
-    "file_size_bytes": 180596
+    "duration_seconds": 3.72,
+    "file_size_bytes": 178604
   },
   {
     "id": "BOX_02D",
@@ -92,8 +104,8 @@
     "arabizi": "Theb n'akkdou el commande w nab3thouhalek?",
     "meaning": "Would you like us to confirm the order and ship it to you?",
     "type": "STATIC CLIP",
-    "duration_seconds": 1.78,
-    "file_size_bytes": 85622
+    "duration_seconds": 1.63,
+    "file_size_bytes": 78284
   },
   {
     "id": "BOX_02E",
@@ -104,8 +116,8 @@
     "arabizi": "El ma3loumet el kol shiha? N'akkdou el commande?",
     "meaning": "Is all the information correct? Shall we confirm the order?",
     "type": "STATIC CLIP",
-    "duration_seconds": 2.11,
-    "file_size_bytes": 101500
+    "duration_seconds": 2.06,
+    "file_size_bytes": 98924
   },
   {
     "id": "BOX_03A",
@@ -116,8 +128,20 @@
     "arabizi": "Marhba bik! Howa 3adda 3andna commande 3al numéro hedha, tnajjem enti t'akkedhelna fi blastou walla n3awdou nkallmouh mba3d?",
     "meaning": "Welcome! They placed an order with this number—can you confirm it on their behalf, or should we call back later?",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.96,
-    "file_size_bytes": 285994
+    "duration_seconds": 5.83,
+    "file_size_bytes": 279884
+  },
+  {
+    "id": "BOX_03A_neutral",
+    "filename": "BOX_03A_family_confirm_neutral.wav",
+    "scenario": "Scenario 3: Relative Answers - Gender-Neutral Confirm",
+    "part": "Part 1: Call Opening & Identity Verification",
+    "text": "مرحبا بيك! فمّا كوموند تعدّات عندنا على النيميرو هذا، تنجم إنت تأكدهالنا وإلا نعاودوا نكلموا بعد شوية؟",
+    "arabizi": "Marhba bik! Famma commande t3addet 3andna 3al numéro hedha, tnajjem enti t'akkedhelna walla n3awdou nkallmou ba3d chwaya?",
+    "meaning": "Welcome! An order was placed with us on this number—can you confirm it for us, or should we call back a bit later?",
+    "type": "STATIC CLIP",
+    "duration_seconds": 5.71,
+    "file_size_bytes": 274124
   },
   {
     "id": "BOX_03B",
@@ -128,8 +152,8 @@
     "arabizi": "Behi misalech y3aychek, waqtech najjmou n3awdou nkallmouh bech n'akkdou m3ah el commande?",
     "meaning": "No problem at all, thank you. When can we call back to confirm the order with them?",
     "type": "STATIC CLIP",
-    "duration_seconds": 4.09,
-    "file_size_bytes": 196156
+    "duration_seconds": 3.97,
+    "file_size_bytes": 190604
   },
   {
     "id": "BOX_03C",
@@ -140,8 +164,8 @@
     "arabizi": "Mriguel y3aychek, tawa n3awdou nkallmouh fi waqt ekher inshallah. Nharek zin w bslama!",
     "meaning": "Got it, thank you! We will call back at another time. Have a good day, goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.62,
-    "file_size_bytes": 269976
+    "duration_seconds": 5.21,
+    "file_size_bytes": 250124
   },
   {
     "id": "BOX_04A",
@@ -152,8 +176,8 @@
     "arabizi": "Samahna barcha 3al iz3aj! Edhaher famma chkoun 3adda commande w hatt ennuméro hedha bil ghalat. Tawa nfasskhouh men 3andna, nharek zin w bslama!",
     "meaning": "So sorry for the disturbance! Someone likely placed an order and typed this number by mistake. We'll remove it right away. Have a great day, goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 8.98,
-    "file_size_bytes": 430880
+    "duration_seconds": 8.86,
+    "file_size_bytes": 425324
   },
   {
     "id": "BOX_04B",
@@ -164,8 +188,8 @@
     "arabizi": "Ok samahna billahi, ghalta fil numéro. Y3aychek w nharek mabrouk, bslama!",
     "meaning": "Okay, pardon us, wrong number. Thank you and have a blessed day, goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.0,
-    "file_size_bytes": 240028
+    "duration_seconds": 4.92,
+    "file_size_bytes": 236204
   },
   {
     "id": "BOX_04C",
@@ -176,8 +200,8 @@
     "arabizi": "Billahi thabbet m3ana, ma fammech had mel dar 3adda commande 3al internet w hatt noumrouk?",
     "meaning": "Just to be sure, did anyone in your household place an online order using your number?",
     "type": "STATIC CLIP",
-    "duration_seconds": 4.13,
-    "file_size_bytes": 198072
+    "duration_seconds": 4.07,
+    "file_size_bytes": 195404
   },
   {
     "id": "BOX_05A",
@@ -188,32 +212,8 @@
     "arabizi": "Marhba bik! Ehna khedmet el horafa, famma commande t3addet 3al page mte3na bil numéro hedha, w nkallmou fik juste bech nthabtou qbal ma nab3thouha.",
     "meaning": "Welcome! We are customer support—an order was placed on our page with this number, and we're just calling to verify before shipping.",
     "type": "STATIC CLIP",
-    "duration_seconds": 9.54,
-    "file_size_bytes": 457764
-  },
-  {
-    "id": "BOX_05B_prefix",
-    "filename": "BOX_05B_prefix_product_reminder.wav",
-    "scenario": "Scenario 5: Product Reminder - Stem Prefix",
-    "part": "Part 1: Call Opening & Identity Verification",
-    "text": "عديت عندنا كوموند على الانترنات فيها",
-    "arabizi": "3addit 3andna commande 3al internet fiha",
-    "meaning": "You placed an online order with us for",
-    "type": "STATIC STEM",
-    "duration_seconds": 2.84,
-    "file_size_bytes": 136476
-  },
-  {
-    "id": "BOX_05B_tail",
-    "filename": "BOX_05B_tail_product_reminder.wav",
-    "scenario": "Scenario 5: Product Reminder - Stem Tail",
-    "part": "Part 1: Call Opening & Identity Verification",
-    "text": "ونكلموا فيك باش نأكدوها معاك قبل التوصيل.",
-    "arabizi": "w nkallmou fik bech n'akkdouha m3ak qbal ettawsil.",
-    "meaning": "and we're calling to confirm it with you before delivery.",
-    "type": "STATIC STEM",
-    "duration_seconds": 2.83,
-    "file_size_bytes": 136040
+    "duration_seconds": 9.22,
+    "file_size_bytes": 442604
   },
   {
     "id": "BOX_05B_full",
@@ -224,8 +224,32 @@
     "arabizi": "3addit 3andna commande 3al internet, w nkallmou fik bech n'akkdouha m3ak qbal ettawsil.",
     "meaning": "You placed an online order with us, and we're calling to confirm it with you before delivery.",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.73,
-    "file_size_bytes": 275214
+    "duration_seconds": 5.34,
+    "file_size_bytes": 256364
+  },
+  {
+    "id": "BOX_05B_prefix",
+    "filename": "BOX_05B_prefix_product_reminder.wav",
+    "scenario": "Scenario 5: Product Reminder - Stem Prefix",
+    "part": "Part 1: Call Opening & Identity Verification",
+    "text": "عديت عندنا كوموند على الانترنات فيها",
+    "arabizi": "3addit 3andna commande 3al internet fiha",
+    "meaning": "You placed an online order with us for",
+    "type": "STATIC STEM",
+    "duration_seconds": 2.8,
+    "file_size_bytes": 134444
+  },
+  {
+    "id": "BOX_05B_tail",
+    "filename": "BOX_05B_tail_product_reminder.wav",
+    "scenario": "Scenario 5: Product Reminder - Stem Tail",
+    "part": "Part 1: Call Opening & Identity Verification",
+    "text": "ونكلموا فيك باش نأكدوها معاك قبل التوصيل.",
+    "arabizi": "w nkallmou fik bech n'akkdouha m3ak qbal ettawsil.",
+    "meaning": "and we're calling to confirm it with you before delivery.",
+    "type": "STATIC STEM",
+    "duration_seconds": 2.64,
+    "file_size_bytes": 126764
   },
   {
     "id": "BOX_06A",
@@ -236,8 +260,8 @@
     "arabizi": "Mriguel, el commande mte3ek t'akkdet! Tawslek fi thmenya w arb3in se3a inshallah, wel livreur ykallmek qbal ma yakhlet. Y3aychek w nharek zin, bslama!",
     "meaning": "Great, your order is confirmed! It will reach you within 48 hours, and the courier will call you before arriving. Thank you, have a good day, goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 9.72,
-    "file_size_bytes": 466546
+    "duration_seconds": 9.69,
+    "file_size_bytes": 465164
   },
   {
     "id": "BOX_06B",
@@ -248,8 +272,8 @@
     "arabizi": "Y3aychek, qayyedneha 3andek! El colis mte3ek yokhrej el youm w yakhletlek fi youmin 3la aqsa taqdir. Rod belek 3la talifounek ki ykallmek el livreur. Mabrouk mosbaqan w bslama!",
     "meaning": "Thank you, we've logged it! Your parcel ships today and arrives within two days max. Keep an eye on your phone for the courier's call. Congrats in advance and goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 10.55,
-    "file_size_bytes": 506258
+    "duration_seconds": 10.49,
+    "file_size_bytes": 503564
   },
   {
     "id": "BOX_06C",
@@ -260,8 +284,8 @@
     "arabizi": "Mriguel, y3aychek! Qbal ma nsakkrou, khallina nthabtou m3a b3adhna fil 3onwen bech el livreur yalqak b souhoula.",
     "meaning": "Great, thank you! Before we hang up, let's verify your address together so the courier finds you easily.",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.73,
-    "file_size_bytes": 322870
+    "duration_seconds": 6.63,
+    "file_size_bytes": 318284
   },
   {
     "id": "BOX_07A_prefix",
@@ -272,8 +296,8 @@
     "arabizi": "El 3onwen el msajjel 3andna howa",
     "meaning": "The address recorded with us is",
     "type": "STATIC STEM",
-    "duration_seconds": 2.15,
-    "file_size_bytes": 103200
+    "duration_seconds": 1.89,
+    "file_size_bytes": 90764
   },
   {
     "id": "BOX_07A_tail",
@@ -284,8 +308,8 @@
     "arabizi": "hakkeka esshih walla theb nzidou tafsil lil livreur?",
     "meaning": "is that correct or would you like to add details for the courier?",
     "type": "STATIC STEM",
-    "duration_seconds": 2.52,
-    "file_size_bytes": 120938
+    "duration_seconds": 2.48,
+    "file_size_bytes": 119084
   },
   {
     "id": "BOX_07B",
@@ -296,8 +320,8 @@
     "arabizi": "Billahi tnajjem ta3tini el 3onwen mte3ek bedhabt, el wileya wel mantqa w bahdha chnowa bedhabt bech el livreur yakhletlek fisa3?",
     "meaning": "Could you please give me your exact address—governorate, area, and a nearby landmark so the courier reaches you quickly?",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.02,
-    "file_size_bytes": 289082
+    "duration_seconds": 5.99,
+    "file_size_bytes": 287564
   },
   {
     "id": "BOX_07C",
@@ -308,8 +332,8 @@
     "arabizi": "Wadhah w mriguel, qayyedt el 3onwen bedhabt lil livreur, w howa déja ykallmek bil talifoun qbal ma yji.",
     "meaning": "Clear and noted! I've written the exact address for the courier, and he will also call your phone before arriving.",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.83,
-    "file_size_bytes": 279762
+    "duration_seconds": 5.77,
+    "file_size_bytes": 277004
   },
   {
     "id": "BOX_08A",
@@ -320,8 +344,8 @@
     "arabizi": "3la 3ini, ma famma hatta mochkel! Lahdha bark nbaddelhalek fil système...",
     "meaning": "Gladly, no problem at all! Just a second while I update it in the system...",
     "type": "0ms OPENER BRIDGE",
-    "duration_seconds": 4.08,
-    "file_size_bytes": 195940
+    "duration_seconds": 4.02,
+    "file_size_bytes": 193004
   },
   {
     "id": "BOX_08B",
@@ -332,8 +356,8 @@
     "arabizi": "Marhba bik, najjmou nbaddlouha b tbi3a! Ama taille w ama loun theb nqayyedlek bedhabt?",
     "meaning": "Welcome, of course we can change it! Which exact size and color would you like me to log for you?",
     "type": "STATIC CLIP",
-    "duration_seconds": 3.93,
-    "file_size_bytes": 188874
+    "duration_seconds": 3.73,
+    "file_size_bytes": 179084
   },
   {
     "id": "BOX_08C",
@@ -344,8 +368,8 @@
     "arabizi": "C'est bon mriguel, baddeltlek el modèle fil commande kima tlabt bedhabt. Theb n'akkdouha 3la hakka?",
     "meaning": "All done! I updated the model in your order just as you requested. Shall we confirm it like this?",
     "type": "STATIC CLIP",
-    "duration_seconds": 4.36,
-    "file_size_bytes": 209308
+    "duration_seconds": 4.23,
+    "file_size_bytes": 203084
   },
   {
     "id": "BOX_09A",
@@ -356,8 +380,8 @@
     "arabizi": "Marhba bik! Tawa n3addellek el 3adad w nahseblek essoum ejjdid...",
     "meaning": "You're very welcome! Let me update the quantity and calculate the new total...",
     "type": "0ms OPENER BRIDGE",
-    "duration_seconds": 3.93,
-    "file_size_bytes": 188694
+    "duration_seconds": 3.82,
+    "file_size_bytes": 183404
   },
   {
     "id": "BOX_09B_tail",
@@ -368,8 +392,8 @@
     "arabizi": "N'akkdou 3la hakka?",
     "meaning": "Shall we confirm?",
     "type": "STATIC STEM",
-    "duration_seconds": 1.02,
-    "file_size_bytes": 49226
+    "duration_seconds": 0.98,
+    "file_size_bytes": 47084
   },
   {
     "id": "BOX_10A",
@@ -380,8 +404,8 @@
     "arabizi": "Fekra behya! A3tini ennuméro etheni billahi, hani nqayyed fih lil livreur bech ken ma khlatech 3lik ykallmek 3lih.",
     "meaning": "Good idea! Give me the second number please, I'm noting it for the courier in case he can't reach your main line.",
     "type": "STATIC CLIP",
-    "duration_seconds": 7.33,
-    "file_size_bytes": 351952
+    "duration_seconds": 7.05,
+    "file_size_bytes": 338444
   },
   {
     "id": "BOX_10B",
@@ -392,8 +416,8 @@
     "arabizi": "Mriguel, tfadhal a3tini el 3onwen ejjdid bedhabt wel wileya, hani nasma3 fik.",
     "meaning": "Got it, go ahead and give me the exact new address and governorate, I'm listening.",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.11,
-    "file_size_bytes": 245520
+    "duration_seconds": 4.96,
+    "file_size_bytes": 238124
   },
   {
     "id": "BOX_10C",
@@ -404,8 +428,8 @@
     "arabizi": "C'est bon, qayyedt el ma3louma ejjdida fil dossier mte3ek. Kol chay mriguel!",
     "meaning": "All set, I saved the new information in your file. Everything is good to go!",
     "type": "STATIC CLIP",
-    "duration_seconds": 4.2,
-    "file_size_bytes": 201772
+    "duration_seconds": 4.12,
+    "file_size_bytes": 197804
   },
   {
     "id": "BOX_11A",
@@ -416,8 +440,8 @@
     "arabizi": "Ettawsil yekhedh ma bin arb3a w 3ichrin w thmenya w arb3in se3a inshallah, w awwel ma yji el livreur bahdhek ykallmek bil talifoun.",
     "meaning": "Delivery takes between 24 and 48 hours, and as soon as the courier is near your area, he will call your phone.",
     "type": "STATIC CLIP",
-    "duration_seconds": 8.56,
-    "file_size_bytes": 410880
+    "duration_seconds": 8.35,
+    "file_size_bytes": 400844
   },
   {
     "id": "BOX_11B",
@@ -428,8 +452,8 @@
     "arabizi": "Ettawsil yakhletlek fi ma bin youmin w thletha ayyem 3amal inshallah, w chariket ettawsil tkallmek qbal ma tjik.",
     "meaning": "Delivery reaches you within 2 to 3 business days, and the shipping company will call you before coming.",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.97,
-    "file_size_bytes": 334448
+    "duration_seconds": 6.62,
+    "file_size_bytes": 317804
   },
   {
     "id": "BOX_11C",
@@ -440,8 +464,8 @@
     "arabizi": "Tokhrej el commande el youm w tawslek fi thmenya w arb3in se3a inshallah. Mriguel n'akkdouha?",
     "meaning": "The order ships today and reaches you in 48 hours. Shall we confirm it?",
     "type": "STATIC CLIP",
-    "duration_seconds": 4.41,
-    "file_size_bytes": 211586
+    "duration_seconds": 4.32,
+    "file_size_bytes": 207404
   },
   {
     "id": "BOX_12A",
@@ -452,8 +476,8 @@
     "arabizi": "Ma thayyerch, tawa nhott moulahdha 3al colis l chariket ettawsil, w ki ykallmek el livreur tnajjem tetfehem m3ah 3al waqt wel blasa elli tse3dek.",
     "meaning": "Don't worry, I'll put a note on the parcel for the delivery company, and when the courier calls, you can coordinate the exact time and place that suits you.",
     "type": "STATIC CLIP",
-    "duration_seconds": 8.83,
-    "file_size_bytes": 424054
+    "duration_seconds": 8.65,
+    "file_size_bytes": 415244
   },
   {
     "id": "BOX_12B",
@@ -464,8 +488,8 @@
     "arabizi": "Mriguel, najjmou nab3thouhalek l 3onwen el khedma mte3ek bech testlemha merteh. Theb tqayyedli 3onwen el khedma?",
     "meaning": "Great, we can ship it to your workplace address so you can receive it comfortably. Would you like to give me your work address?",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.06,
-    "file_size_bytes": 243002
+    "duration_seconds": 5.02,
+    "file_size_bytes": 241004
   },
   {
     "id": "BOX_13A",
@@ -476,8 +500,8 @@
     "arabizi": "Essoum elli 3tithoulek howa essoum el jomli wel nihe'i, ettawsil dekhel fih, ma tzid 3lih chay!",
     "meaning": "The price I gave you is the final total price—delivery is already included, you don't pay anything extra!",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.22,
-    "file_size_bytes": 298366
+    "duration_seconds": 6.02,
+    "file_size_bytes": 289004
   },
   {
     "id": "BOX_13B",
@@ -488,8 +512,8 @@
     "arabizi": "Ettawsil b sab3a lef l kemel toureb el jomhouriya, w kemel dekhel fil soum el jomli elli qolthoulek.",
     "meaning": "Delivery is 7 DT anywhere in Tunisia, and it's already included in the total price I mentioned.",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.18,
-    "file_size_bytes": 296494
+    "duration_seconds": 5.74,
+    "file_size_bytes": 275564
   },
   {
     "id": "BOX_13C",
@@ -500,8 +524,8 @@
     "arabizi": "Ma3loum ettawsil thmanya dinarat l kemel el wileyet, hatta l beb eddar.",
     "meaning": "The delivery fee is 8 DT across all governorates, right to your doorstep.",
     "type": "STATIC CLIP",
-    "duration_seconds": 4.42,
-    "file_size_bytes": 212356
+    "duration_seconds": 4.36,
+    "file_size_bytes": 209324
   },
   {
     "id": "BOX_14A",
@@ -512,8 +536,8 @@
     "arabizi": "3la 3ini! Tawa n3addihalek isti3jeli w tokhrej el youm fi awwel voyage m3a chariket ettawsil bech takhletlek fi aqrab waqt inshallah.",
     "meaning": "Gladly! I will mark it as urgent priority and dispatch it today in the first batch with the courier so it reaches you as fast as possible.",
     "type": "STATIC CLIP",
-    "duration_seconds": 8.28,
-    "file_size_bytes": 397248
+    "duration_seconds": 8.01,
+    "file_size_bytes": 384524
   },
   {
     "id": "BOX_15A",
@@ -524,8 +548,8 @@
     "arabizi": "Ey b tbi3a, el khlas 3and el istilem! Ma tedfa3 hatta millim tawa, tkhalles el livreur cash ki tasel essel3a l beb darek.",
     "meaning": "Yes of course, payment is Cash on Delivery! You don't pay a single millime now—you pay the courier cash when the item arrives at your door.",
     "type": "STATIC CLIP",
-    "duration_seconds": 7.56,
-    "file_size_bytes": 362758
+    "duration_seconds": 7.23,
+    "file_size_bytes": 347084
   },
   {
     "id": "BOX_16A",
@@ -536,8 +560,8 @@
     "arabizi": "Ey b tbi3a, men haqqek thell el colis w tthabbet fi sel3tek qoddem el livreur qbal ma tkhalles, bech tebda merteh mya bil mya!",
     "meaning": "Yes of course, you have the right to open the parcel and inspect your item in front of the courier before paying, so you have 100% peace of mind!",
     "type": "STATIC CLIP",
-    "duration_seconds": 7.33,
-    "file_size_bytes": 351774
+    "duration_seconds": 7.29,
+    "file_size_bytes": 349964
   },
   {
     "id": "BOX_16B",
@@ -548,8 +572,8 @@
     "arabizi": "Qanoun chariket ettawsil fi Tounes ma yasmahch b hallen el colis qbal el khlas, ama koun heni: el fatoura w noumrou khedmet el horafa fouq el colis, w ken famma ay haja nbaddlouhalek fawran!",
     "meaning": "Courier company rules in Tunisia don't allow opening parcels before payment, but rest assured: our invoice and support number are on the box, and if there's any issue we exchange it immediately!",
     "type": "STATIC CLIP",
-    "duration_seconds": 11.92,
-    "file_size_bytes": 572028
+    "duration_seconds": 11.57,
+    "file_size_bytes": 555404
   },
   {
     "id": "BOX_17A",
@@ -560,8 +584,8 @@
     "arabizi": "Koun heni, essel3a qualité momteza w moutabqa mya bil mya lilli choftha fil page, w mthabtin fiha mlih qbal ma tokhrej.",
     "meaning": "Rest assured, the product is top quality, 100% identical to what you saw on the page, and carefully inspected before shipping.",
     "type": "STATIC CLIP",
-    "duration_seconds": 7.77,
-    "file_size_bytes": 373240
+    "duration_seconds": 7.27,
+    "file_size_bytes": 349004
   },
   {
     "id": "BOX_17B",
@@ -572,8 +596,8 @@
     "arabizi": "Ey b tbi3a, essel3a asliya w tjik bil garantie mte3ha wel fatoura, w khedmet el horafa mte3na dima 3la dhemtek.",
     "meaning": "Yes of course, the product is authentic and comes with its warranty and invoice, and our customer service is always at your disposal.",
     "type": "STATIC CLIP",
-    "duration_seconds": 7.49,
-    "file_size_bytes": 359766
+    "duration_seconds": 7.08,
+    "file_size_bytes": 339884
   },
   {
     "id": "BOX_18A",
@@ -584,8 +608,8 @@
     "arabizi": "Ma thayyerch jemla! Ken ettaille ma jatech qaddek walla habbit tbaddel el modèle, tkallemna 3la nafs ennuméro hedha w nab3thoulek el livreur ybaddelhalek.",
     "meaning": "Don't worry at all! If the size doesn't fit or you want to swap models, just call us on this number and we'll send the courier to exchange it for you.",
     "type": "STATIC CLIP",
-    "duration_seconds": 9.2,
-    "file_size_bytes": 441724
+    "duration_seconds": 8.83,
+    "file_size_bytes": 423884
   },
   {
     "id": "BOX_19A",
@@ -596,8 +620,8 @@
     "arabizi": "Wallahi y3aychek essoum hedheka déja fih promotion khassa, ama koun heni essel3a haja ndhifa barcha w testehal, w inshallah ta3jbek!",
     "meaning": "Honestly, that price already includes a special promotion, and rest assured the item is very high quality and well worth it—you'll love it!",
     "type": "STATIC CLIP",
-    "duration_seconds": 8.79,
-    "file_size_bytes": 422012
+    "duration_seconds": 8.36,
+    "file_size_bytes": 401324
   },
   {
     "id": "BOX_19B",
@@ -608,8 +632,8 @@
     "arabizi": "Wallahi essoum fixe y3aychek khater déja hasbinha b soum el promo, theb n'akkdou el commande?",
     "meaning": "The price is fixed, thank you, as it's already calculated at the promo rate. Shall we confirm the order?",
     "type": "STATIC CLIP",
-    "duration_seconds": 4.43,
-    "file_size_bytes": 212654
+    "duration_seconds": 4.34,
+    "file_size_bytes": 208364
   },
   {
     "id": "BOX_20A",
@@ -620,8 +644,8 @@
     "arabizi": "Khodh rahtek b tbi3a! Tawa nkhallilek el commande m3allqa fil système, w n3awdou nkallmouk ghodwa inshallah bech nchoufou rayek. Nharek zin!",
     "meaning": "Take your time of course! I'll keep your order on hold in the system, and we'll call you back tomorrow to check your decision. Have a good day!",
     "type": "STATIC CLIP",
-    "duration_seconds": 9.0,
-    "file_size_bytes": 432066
+    "duration_seconds": 8.69,
+    "file_size_bytes": 417164
   },
   {
     "id": "BOX_20B",
@@ -632,8 +656,8 @@
     "arabizi": "Marhba bik, ma famma hatta mochkel! Tawa nqayyedha 3andek fil système bech nab3thouhalek fil tarikh elli yse3dek bedhabt. Nharek mabrouk w bslama!",
     "meaning": "Welcome, no problem at all! I'll schedule it in the system so we ship it on the exact date that suits you. Have a blessed day, goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 9.54,
-    "file_size_bytes": 457924
+    "duration_seconds": 9.29,
+    "file_size_bytes": 445964
   },
   {
     "id": "BOX_21A",
@@ -644,8 +668,8 @@
     "arabizi": "Ma famma hatta mochkel y3aychek! Tawa nbattlou el commande mel système, w marhba bik 3andna fi ay waqt ekher. Nharek zin w bslama!",
     "meaning": "No problem at all, thank you! We'll cancel the order in the system right away, and you're always welcome anytime. Have a great day, goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 7.55,
-    "file_size_bytes": 362464
+    "duration_seconds": 7.5,
+    "file_size_bytes": 360044
   },
   {
     "id": "BOX_21B",
@@ -656,8 +680,8 @@
     "arabizi": "3la rahtek y3aychek! Juste najjem na3ref ken famma ichkel fil soum walla fi waqt ettawsil najjmou n3awnouk fih qbal ma nbattlouha?",
     "meaning": "Totally up to you! May I just ask if there was an issue with the price or delivery timing that we could help solve before canceling?",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.19,
-    "file_size_bytes": 297028
+    "duration_seconds": 6.13,
+    "file_size_bytes": 294284
   },
   {
     "id": "BOX_22A",
@@ -668,8 +692,8 @@
     "arabizi": "Behi elli qoltli y3aychek! Tawa nfassakh el commande el m3awda w nkhallilek ka3ba bark m'akkda. Tawslek fi thmenya w arb3in se3a inshallah!",
     "meaning": "Good thing you told me, thank you! I'll delete the duplicate order and keep just one confirmed for you. It will reach you in 48 hours!",
     "type": "STATIC CLIP",
-    "duration_seconds": 8.76,
-    "file_size_bytes": 420600
+    "duration_seconds": 8.7,
+    "file_size_bytes": 417644
   },
   {
     "id": "BOX_23A",
@@ -680,8 +704,8 @@
     "arabizi": "Samahna 3al iz3aj w rabbi y3awnek! Tawa n3awdou nkallmouk mba3d ki tebda fadhi inshallah. Bslama!",
     "meaning": "Sorry for the interruption and may God help you! We'll call you back later when you're free. Goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.71,
-    "file_size_bytes": 322346
+    "duration_seconds": 6.58,
+    "file_size_bytes": 315884
   },
   {
     "id": "BOX_23B",
@@ -692,8 +716,8 @@
     "arabizi": "Rabbi y3awnek! Ken el commande mte3ek mrigla qolli ghir ey w nab3thouhalek men ghir ma n3attlek!",
     "meaning": "May God help you! If your order is good to go, just say 'yes' and we'll ship it without holding you up!",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.08,
-    "file_size_bytes": 291912
+    "duration_seconds": 5.81,
+    "file_size_bytes": 278924
   },
   {
     "id": "BOX_24A",
@@ -704,8 +728,8 @@
     "arabizi": "Allo? Mezel m3ana 3al khat? Tasma3 fiya mlih?",
     "meaning": "Hello? Are you still with us on the line? Can you hear me well?",
     "type": "STATIC CLIP",
-    "duration_seconds": 1.88,
-    "file_size_bytes": 90164
+    "duration_seconds": 1.82,
+    "file_size_bytes": 87404
   },
   {
     "id": "BOX_24B",
@@ -716,8 +740,8 @@
     "arabizi": "Samahni billahi, essout tqatta3 chwaya ma sma3tekch mlih, tnajjem t3awedli chnowa qolt?",
     "meaning": "Pardon me, the audio cut out slightly and I didn't hear you clearly—could you repeat what you said?",
     "type": "STATIC CLIP",
-    "duration_seconds": 3.88,
-    "file_size_bytes": 186082
+    "duration_seconds": 3.65,
+    "file_size_bytes": 175244
   },
   {
     "id": "BOX_24C",
@@ -728,8 +752,8 @@
     "arabizi": "Edhaher eréseau te3eb chwaya w essout mouch wadhah, tawa n3awdou nkallmouk ba3d chwaya. Bslama!",
     "meaning": "It looks like the network signal is weak and audio isn't clear—we'll call you back shortly. Goodbye!",
     "type": "STATIC CLIP",
-    "duration_seconds": 5.9,
-    "file_size_bytes": 283170
+    "duration_seconds": 5.84,
+    "file_size_bytes": 280364
   },
   {
     "id": "BOX_25A",
@@ -740,8 +764,8 @@
     "arabizi": "Khodh rahtek, hani m3ak 3al khat nestanna fik.",
     "meaning": "Take your time, I'm on the line waiting for you.",
     "type": "STATIC CLIP",
-    "duration_seconds": 2.83,
-    "file_size_bytes": 135808
+    "duration_seconds": 2.63,
+    "file_size_bytes": 126284
   },
   {
     "id": "BOX_26A",
@@ -752,8 +776,8 @@
     "arabizi": "Ey y3aychek, ena el mousa3ed edhaki mte3 khedmet el horafa, nkallem fik bech nrebhouk fil waqt w n'akkdoulek el commande mte3ek fisa3! Mriguel n'akkdouha?",
     "meaning": "Yes indeed, I'm the smart customer service assistant, calling to save you time and confirm your order quickly! Shall we confirm it?",
     "type": "STATIC CLIP",
-    "duration_seconds": 7.09,
-    "file_size_bytes": 340294
+    "duration_seconds": 7.03,
+    "file_size_bytes": 337484
   },
   {
     "id": "BOX_26B",
@@ -764,8 +788,56 @@
     "arabizi": "W ken theb tkallem had mel fariq mte3na, tawa nkhalli moulahdha w y3awed ykallmek mas'oul el horafa moubachara.",
     "meaning": "And if you'd like to speak with a team member, I'll leave a note and a support agent will call you directly.",
     "type": "STATIC CLIP",
-    "duration_seconds": 6.86,
-    "file_size_bytes": 329264
+    "duration_seconds": 6.71,
+    "file_size_bytes": 322124
+  },
+  {
+    "id": "BOX_27A",
+    "filename": "BOX_27A_generic_polite_goodbye.wav",
+    "scenario": "Scenario 27: Standalone Polite Goodbye",
+    "part": "Part 7: Conversation Control, Audio Issues & Special Cases",
+    "text": "يعيشك برشا على وقتك، نهارك زين وبسلامة!",
+    "arabizi": "Y3aychek barcha 3la waqtek, nharek zin w bslama!",
+    "meaning": "Thank you very much for your time, have a great day and goodbye!",
+    "type": "STATIC CLIP",
+    "duration_seconds": 2.64,
+    "file_size_bytes": 126764
+  },
+  {
+    "id": "BOX_28A",
+    "filename": "BOX_28A_already_confirmed_apology.wav",
+    "scenario": "Scenario 28: Already Confirmed / Duplicate Call Apology",
+    "part": "Part 7: Conversation Control, Audio Issues & Special Cases",
+    "text": "سامحنا يعيشك! الظاهر الكوموند متاعك ديجا مؤكدة في السيستام، ما تحيرش ما تتبعتش مرتين. نهارك زين وبسلامة!",
+    "arabizi": "Samahna y3aychek! Edhaher el commande mte3ek déja m'akkda fil système, ma thayyerch ma tetb3athch marrtin. Nharek zin w bslama!",
+    "meaning": "Pardon us! It looks like your order is already confirmed in our system—don't worry, it won't ship twice. Have a great day, goodbye!",
+    "type": "STATIC CLIP",
+    "duration_seconds": 7.97,
+    "file_size_bytes": 382604
+  },
+  {
+    "id": "BOX_29A",
+    "filename": "BOX_29A_angry_opt_out_close.wav",
+    "scenario": "Scenario 29: Angry / Do-Not-Call Opt-Out Close",
+    "part": "Part 7: Conversation Control, Audio Issues & Special Cases",
+    "text": "سامحنا برشا على الإزعاج! توا نفسخ نومروك من السيستام وما عادش نكلموك جملة. نهارك زين وبسلامة.",
+    "arabizi": "Samahna barcha 3al iz3aj! Tawa nfassakh noumrouk mel système w ma 3adch nkallmouk jemla. Nharek zin w bslama.",
+    "meaning": "Very sorry for the disturbance! We will remove your number from our system right now and won't call you again. Have a good day, goodbye.",
+    "type": "STATIC CLIP",
+    "duration_seconds": 7.31,
+    "file_size_bytes": 350924
+  },
+  {
+    "id": "BOX_30A",
+    "filename": "BOX_30A_french_customer_fallback.wav",
+    "scenario": "Scenario 30: French-Speaking Customer Intro Fallback",
+    "part": "Part 7: Conversation Control, Audio Issues & Special Cases",
+    "text": "Bonjour ! Service client pour votre commande en ligne. Je vous appelle juste pour la confirmer avant la livraison.",
+    "arabizi": "Bonjour! Service client pour votre commande en ligne. Je vous appelle juste pour la confirmer avant la livraison.",
+    "meaning": "Hello! Customer service regarding your online order. I'm calling just to confirm it before delivery.",
+    "type": "STATIC CLIP",
+    "duration_seconds": 5.87,
+    "file_size_bytes": 281804
   },
   {
     "id": "BRIDGE_01",
@@ -776,8 +848,8 @@
     "arabizi": "Y3aychek, mriguel!",
     "meaning": "Thank you, got it!",
     "type": "0ms OPENER BRIDGE",
-    "duration_seconds": 1.49,
-    "file_size_bytes": 71544
+    "duration_seconds": 1.25,
+    "file_size_bytes": 60044
   },
   {
     "id": "BRIDGE_02",
@@ -788,8 +860,8 @@
     "arabizi": "Behi y3aychek, lahdha bark nthabbetlek fil système...",
     "meaning": "Okay thank you, just a second while I check the system for you...",
     "type": "0ms OPENER BRIDGE",
-    "duration_seconds": 3.25,
-    "file_size_bytes": 156130
+    "duration_seconds": 2.99,
+    "file_size_bytes": 143564
   },
   {
     "id": "BRIDGE_03",
@@ -800,8 +872,8 @@
     "arabizi": "3la 3ini, hani nqayyed fiha 3andek...",
     "meaning": "Gladly, I'm logging it for you right now...",
     "type": "0ms OPENER BRIDGE",
-    "duration_seconds": 2.41,
-    "file_size_bytes": 115648
+    "duration_seconds": 2.15,
+    "file_size_bytes": 103244
   },
   {
     "id": "BRIDGE_04",
@@ -812,8 +884,8 @@
     "arabizi": "Sou'el behi, tawa nqollek bedhabt...",
     "meaning": "Good question, let me tell you exactly...",
     "type": "0ms OPENER BRIDGE",
-    "duration_seconds": 2.03,
-    "file_size_bytes": 97696
+    "duration_seconds": 1.59,
+    "file_size_bytes": 76364
   },
   {
     "id": "BRIDGE_05",
@@ -824,8 +896,8 @@
     "arabizi": "Fhemtek bil behi, ma thayyerch...",
     "meaning": "I completely understand, don't worry...",
     "type": "0ms OPENER BRIDGE",
-    "duration_seconds": 2.13,
-    "file_size_bytes": 102068
+    "duration_seconds": 1.91,
+    "file_size_bytes": 91724
   },
   {
     "id": "BRIDGE_06",
@@ -836,7 +908,31 @@
     "arabizi": "Wadhah y3aychek...",
     "meaning": "Clear, thank you...",
     "type": "0ms OPENER BRIDGE",
-    "duration_seconds": 1.69,
-    "file_size_bytes": 81342
+    "duration_seconds": 0.93,
+    "file_size_bytes": 44684
+  },
+  {
+    "id": "BRIDGE_LONG_01",
+    "filename": "BRIDGE_LONG_01_checking_system_full.wav",
+    "scenario": "Scenario B7: Extended Off-Script System Check Bridge (~4.8s)",
+    "part": "Part 8: Zero-Latency Opener Bridge Micro-Clips",
+    "text": "باهي يعيشك، لحظة صغيرة برك هاني نثبتلك في السيستام متاع الكوموندات باش نجاوبك بالضبط...",
+    "arabizi": "Behi y3aychek, lahdha sghira bark hani nthabbetlek fil système mte3 el commandet bech njewbek bedhabt...",
+    "meaning": "Okay thank you, just one quick moment while I check the orders system so I can answer you accurately...",
+    "type": "0ms OPENER BRIDGE",
+    "duration_seconds": 6.67,
+    "file_size_bytes": 320204
+  },
+  {
+    "id": "BRIDGE_LONG_02",
+    "filename": "BRIDGE_LONG_02_modifying_order_full.wav",
+    "scenario": "Scenario B8: Extended Off-Script Modification Bridge (~4.8s)",
+    "part": "Part 8: Zero-Latency Opener Bridge Micro-Clips",
+    "text": "على عيني، ما فمّا حتى مشكل! لحظة برك هاني نبدلها لك في السيستام ونثبتلك في التفاصيل الجديدة...",
+    "arabizi": "3la 3ini, ma famma hatta mochkel! Lahdha bark hani nbaddelhalek fil système w nthabbetlek fil tafasil ejjdida...",
+    "meaning": "Gladly, no problem at all! Just a moment while I update it in the system and verify the new details for you...",
+    "type": "0ms OPENER BRIDGE",
+    "duration_seconds": 6.7,
+    "file_size_bytes": 321644
   }
 ]

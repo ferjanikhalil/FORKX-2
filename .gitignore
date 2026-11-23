@@ -32,3 +32,7 @@ node_modules/
 .superpowers/
 docs/superpowers/
 .gstack/
+
+# Local DB and workflow backups (may contain credentials)
+backup_dograh_full.sql
+backup_workflow_1.json

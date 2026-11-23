@@ -1,0 +1,162 @@
+{
+  "name": "calling to confirm the purchase of the ecom order - outbound",
+  "version_number": 1,
+  "status": "published",
+  "workflow_definition": {
+    "edges": [
+      {
+        "id": "1-4",
+        "data": {
+          "label": "End call",
+          "invalid": false,
+          "condition": "Choose this pathway when the order has been confirmed, cancelled, or you reached the wrong person and the call should end.",
+          "validationMessage": null
+        },
+        "type": "custom",
+        "source": "1",
+        "target": "4",
+        "animated": true,
+        "selected": false
+      }
+    ],
+    "nodes": [
+      {
+        "id": "1",
+        "data": {
+          "name": "Start Call",
+          "prompt": "# التثبت مع سي خليل وتأكيد كوموند آيباد عشرة أربعة وستين جيغا رمادي بـ ألف وثلاثة مية وتسعين دينار فيكس بالتوصيل (الخلاص عند الاستلام، التوصيل 48 ساعة).\n\nاستعمل الكود بالضبط حسب كلام الحريف (ردود قصيرة وفورية):\n1. إذا أكد أنه سي خليل (أي، نعم، معاك خليل، تفضل): جاوب فوراً بدون tool call بـ:\n[BOX_02A] عندك آيباد عشرة أربعة وستين جيغا رمادي بـ ألف وثلاثة مية وتسعين دينار بالتوصيل. [BOX_02D]\n2. إذا سأل على وقت التوصيل: رد بـ [BOX_11C]\n3. إذا سأل على مصاريف التوصيل: رد بـ [BOX_13A]\n4. إذا سأل على الخلاص (عند الاستلام): رد بـ [BOX_15A] [BOX_02D]\n5. إذا سأل \"نجم نحل الكولي قبل ما نخلص؟\": رد بـ [BOX_16A] [BOX_02D]\n6. إذا سأل على الجودة أو الضمان: رد بـ [BOX_17B] [BOX_02D]\n7. إذا سأل على التبديل: رد بـ [BOX_18A] [BOX_02D]\n8. إذا طلب تخفيض أو قال غالية: رد بـ [BOX_19B]\n9. إذا حب يبدل اللون (مثلا الأزرق) أو السعة (ميتين وستة وخمسين جيغا): رد بـ:\n[BRIDGE_LONG_02] باهي مريقل سي خليل، بدلتلك الموديل في السيستام. [BOX_02D]\n10. إذا رد حد من العائلة أو الدار: رد بـ [BOX_03A_neutral]\n11. إذا سأل \"شكون معاي؟ / أي كوموند؟\": رد بـ [BOX_05A]\n12. إذا قال \"اصبر لحظة\": رد بـ [BOX_25A]\n13. إذا سأل \"إنت روبو / إنسان آلي؟\": رد بـ [BOX_26A]\n14. إذا تكلم بالفرنسية: رد بـ [BOX_30A]\n15. لإنهاء المكالمة فوراً استعمل الـ tool واختار End call في أي من الحالات التالية:\n- وافق وأكد الكوموند (\"إيه، مريقل، أكدها، ابعث\") أو قال \"أوكي / عيشك / بسلامة\" بعد التثبت.\n- رفض أو ألغى الكوموند (\"بطلت، ما حاجتيش\").\n- الرقم غالط أو ما عدّى حتى كوموند.\n- طلب التأجيل ليوم آخر.\n- مشغول أو يسوق (\"هاني نسوق، كلمني مبعد\").\n- قال \"أكدتوها قبيلة\".\n- غاضب وطلب عدم الإزعاج.",
+          "invalid": false,
+          "greeting": "[BOX_01A_stem] سي خليل؟",
+          "is_start": true,
+          "is_static": false,
+          "delayed_start": false,
+          "allow_interrupt": true,
+          "detect_voicemail": false,
+          "add_global_prompt": true,
+          "validationMessage": null,
+          "hovered_through_edge": false,
+          "selected_through_edge": false,
+          "wait_for_user_response": false
+        },
+        "type": "startCall",
+        "dragging": false,
+        "measured": {
+          "width": 320,
+          "height": 128
+        },
+        "position": {
+          "x": 175,
+          "y": 60
+        },
+        "selected": false
+      },
+      {
+        "id": "0",
+        "data": {
+          "name": "Global Node",
+          "prompt": "إنت مريم، موظفة تأكيد طلبات بالدارجة التونسية، تتكلم فقط بالتونسي.\nباش الصوت يكون سريع وطبيعي، ديما استعمل الكود الجاهز بين معقفات كيما مكتوب بالضبط بلاش تبديل ولا شرح:\n- للحالات الجاهزة استعمل الكود وحدو فقط (مثال: [BOX_15A] [BOX_02D]).\n- إذا فما كلام متغيّر، اكتبلو الأرقام بالحروف العربية (مثال: ألف وثلاثة مية وتسعين، أربعة وستين).\n- لا تخترع أي كود مش موجود في التعليمات، ولا تحط نقطة مباشرة بعد الكود إذا مازال فما كلام بعدو.",
+          "invalid": false,
+          "is_static": false,
+          "allow_interrupt": true,
+          "validationMessage": null
+        },
+        "type": "globalNode",
+        "dragging": false,
+        "measured": {
+          "width": 320,
+          "height": 128
+        },
+        "position": {
+          "x": -325,
+          "y": 480
+        },
+        "selected": false
+      },
+      {
+        "id": "4",
+        "data": {
+          "name": "End Call",
+          "is_end": true,
+          "prompt": "CRITICAL RULE: Output ONLY the exact bracketed English tag below and NOTHING else (0 extra words, no Arabic sentences, no punctuation). The audio engine plays the pre-recorded Tunisian audio automatically from the tag.\n\nChoose ONE tag matching the call outcome and output it literally:\n- Order confirmed: [BOX_06A]\n- Order cancelled: [BOX_21A]\n- Wrong number: [BOX_04A]\n- Customer postponed / callback tomorrow: [BOX_20A]\n- Customer busy / driving: [BOX_23A]\n- Already confirmed earlier: [BOX_28A]\n- Angry / do-not-call: [BOX_29A]\n- Other polite goodbye: [BOX_27A]\n\nExample output: [BOX_06A]",
+          "invalid": false,
+          "is_static": false,
+          "allow_interrupt": true,
+          "add_global_prompt": false,
+          "extraction_prompt": "",
+          "validationMessage": null,
+          "extraction_enabled": false,
+          "extraction_variables": [],
+          "hovered_through_edge": false,
+          "selected_through_edge": false
+        },
+        "type": "endCall",
+        "dragging": false,
+        "measured": {
+          "width": 320,
+          "height": 128
+        },
+        "position": {
+          "x": 175,
+          "y": 900
+        },
+        "selected": false
+      }
+    ],
+    "viewport": {
+      "x": 22.136216847789342,
+      "y": -54.433860756783815,
+      "zoom": 0.7080877191072709
+    }
+  },
+  "call_disposition_codes": {
+    "disposition_codes": [
+      "user_hangup",
+      "order_confirmed",
+      "order_declined",
+      "system_cancelled",
+      "negotiation_in_progress",
+      "pipeline_error",
+      "user_idle_max_duration_exceeded"
+    ]
+  },
+  "template_context_variables": {},
+  "workflow_configurations": {
+    "call_dispositions": [
+      {
+        "code": "order_confirmed",
+        "description": "سي خليل أكد شراء الـ iPad وموافق على التوصيل."
+      },
+      {
+        "code": "order_declined",
+        "description": "سي خليل رفض أو لغى شراء الـ iPad."
+      },
+      {
+        "code": "negotiation_in_progress",
+        "description": "سي خليل طلب وقت أو تفاوض ولم يحدد قراره النهائي بعد."
+      }
+    ],
+    "model_configuration_override": {
+      "mode": "pipeline",
+      "llm": {
+        "provider": "punica",
+        "settings": {
+          "model": "hannibal"
+        }
+      },
+      "stt": {
+        "provider": "punica",
+        "settings": {
+          "model": "fennec",
+          "language": "ar"
+        }
+      },
+      "tts": {
+        "provider": "punica",
+        "settings": {
+          "model": "dido",
+          "voice": "dido"
+        }
+      }
+    }
+  }
+}
