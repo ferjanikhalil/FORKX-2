@@ -299,7 +299,10 @@ export const useWebSocketRTC = ({ workflowId, workflowRunId, accessToken, initia
 
         pc.addEventListener('track', (evt) => {
             if (evt.track.kind === 'audio' && audioRef.current) {
-                audioRef.current.srcObject = evt.streams[0];
+                audioRef.current.srcObject = evt.streams[0] ?? new MediaStream([evt.track]);
+                void audioRef.current.play().catch((err) => {
+                    logger.warn('Audio play() after track attach failed:', err);
+                });
             }
         });
 

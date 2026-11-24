@@ -537,6 +537,12 @@ def _stt_configurable_settings(config, *, for_update: bool = False) -> dict[str,
             return {"language": Language.EN}
     if provider == ServiceProviders.ELEVENLABS:
         return {"language": _resolve_elevenlabs_stt_language(language)}
+    if provider == ServiceProviders.PUNICA:
+        lang = language or "ar"
+        try:
+            return {"language": Language(lang)}
+        except ValueError:
+            return {"language": lang}
     return {}  # OpenAI currently exposes no per-agent settings besides model.
 
 
@@ -664,7 +670,10 @@ def create_stt_service(
         _validate_runtime_service_url(base_url, "base_url")
         return OpenAISTTService(
             api_key=user_config.stt.api_key,
-            settings=OpenAISTTSettings(model=user_config.stt.model),
+            settings=OpenAISTTSettings(
+                model=user_config.stt.model,
+                **configurable_settings,
+            ),
             base_url=base_url,
             should_interrupt=False,
         )

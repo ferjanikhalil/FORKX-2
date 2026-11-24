@@ -14,6 +14,7 @@ from typing import AsyncGenerator
 import openai
 from loguru import logger
 from pipecat.frames.frames import ErrorFrame, Frame, TTSAudioRawFrame
+from pipecat.services.settings import TTSSettings
 from pipecat.services.tts_service import TTSService
 from pipecat.utils.tracing.service_decorators import traced_tts
 
@@ -243,15 +244,27 @@ class PunicaTTSService(TTSService):
         text_filters: list | None = None,
         **kwargs,
     ):
+        resolved_model = model or "dido"
+        resolved_voice = voice or "dido"
+        default_settings = TTSSettings(
+            model=resolved_model,
+            voice=resolved_voice,
+            language=None,
+        )
         stop_timeout = kwargs.pop("stop_frame_timeout_s", 15.0)
+        push_start = kwargs.pop("push_start_frame", True)
+        push_stop = kwargs.pop("push_stop_frames", True)
         super().__init__(
             sample_rate=sample_rate,
             text_filters=text_filters,
+            push_start_frame=push_start,
+            push_stop_frames=push_stop,
             stop_frame_timeout_s=stop_timeout,
+            settings=default_settings,
             **kwargs,
         )
-        self._model = model or "dido"
-        self._voice = voice or "dido"
+        self._model = resolved_model
+        self._voice = resolved_voice
         self._sample_rate = sample_rate
         self._cache_dir = _resolve_cache_dir()
         self._client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url)

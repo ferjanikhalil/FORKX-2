@@ -266,6 +266,13 @@ def register_event_handlers(
             recorded = greeting and greeting[0] in {"audio", "audio_recording_id"}
             if not recorded and not await engine.wait_for_generation_ready():
                 return
+            if type(transport).__name__ == "SmallWebRTCTransport":
+                # Give the browser <audio> sink, WebRTC jitter buffer, and OS/Bluetooth
+                # audio device switch time to lock onto RawAudioTrack's RTP stream
+                # before zero-latency static/cached greetings fire.
+                await asyncio.sleep(1.5)
+                if engine.is_call_disposed():
+                    return
             engine.call_monitor.activate()
             opening = await engine.queue_node_opening(
                 node_id=engine.active_agent.workflow.start_node_id,
