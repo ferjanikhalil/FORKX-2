@@ -976,6 +976,12 @@ class PipecatEngine:
         agent.system_prompt = prompt.text
         if agent.recording_router is not None:
             agent.recording_router.set_enabled(prompt.recording_enabled)
+        prewarm_fn = getattr(agent.tts, "prewarm_spoken_slots", None)
+        if callable(prewarm_fn):
+            formatted_greeting = (
+                self._format_prompt(node.greeting) if node.greeting else None
+            )
+            prewarm_fn(greeting=formatted_greeting, prompt=prompt.text)
         if apply_settings:
             await agent.llm._update_settings(
                 LLMSettings(system_instruction=prompt.text)

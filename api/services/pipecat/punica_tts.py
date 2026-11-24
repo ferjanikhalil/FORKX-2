@@ -9,14 +9,21 @@ import re
 import time
 import wave
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import AsyncGenerator, AsyncIterator
 
 import openai
 from loguru import logger
 from pipecat.frames.frames import ErrorFrame, Frame, TTSAudioRawFrame
 from pipecat.services.settings import TTSSettings
-from pipecat.services.tts_service import TTSService
+from pipecat.services.tts_service import TextAggregationMode, TTSService
+from pipecat.utils.text.base_text_aggregator import Aggregation, AggregationType
+from pipecat.utils.text.simple_text_aggregator import SimpleTextAggregator
 from pipecat.utils.tracing.service_decorators import traced_tts
+
+from api.services.pipecat.punica_http import (
+    DEFAULT_PUNICA_BASE_URL,
+    get_shared_punica_http_client,
+)
 
 _SAMPLE_RATE = 24000
 _CHUNK_BYTES = 4800  # 2400 samples = 100ms at 24kHz 16-bit mono
@@ -24,11 +31,18 @@ _STITCH_GAP_BYTES = b"\x00\x00" * int(_SAMPLE_RATE * 0.065)  # 65ms controlled b
 
 _TAG_PATTERN = re.compile(r"(\[?(?:BOX|BRIDGE)_[A-Za-z0-9_]+\]?)", re.IGNORECASE)
 _TAG_ONLY_PATTERN = re.compile(r"^\[?((?:BOX|BRIDGE)_[A-Za-z0-9_]+)\]?$", re.IGNORECASE)
+_TRAILING_BRACKET_TAG_RE = re.compile(
+    r"^(.*?)(\[((?:BOX|BRIDGE)_[A-Za-z0-9_]+)\])$", re.IGNORECASE | re.DOTALL
+)
+_HYBRID_PROMPT_LINE_RE = re.compile(
+    r"^\s*\[(?:BOX|BRIDGE)_[A-Za-z0-9_]+\]", re.IGNORECASE
+)
 _DIACRITICS_RE = re.compile(r"[\u064B-\u065F\u0670\u0640]")
 _PUNCT_RE = re.compile(r"[،؛؟?!.:,\-\"'«»()\[\]{}…]")
 
 _RECORDS_LOADED = False
 _RECORDS_BY_ID_UPPER: dict[str, tuple[str, bytes]] = {}
+_STANDALONE_TAG_IDS_UPPER: set[str] = set()
 _RECORDS_BY_NORM_TEXT: dict[str, tuple[str, bytes]] = {}
 _STEMS_BY_TOKENS: list[tuple[list[str], str, bytes]] = []
 
@@ -85,7 +99,11 @@ def _ensure_records_loaded() -> None:
             with wave.open(str(wav_path), "rb") as w:
                 pcm = w.readframes(w.getnframes())
 
-            _RECORDS_BY_ID_UPPER[clip_id.upper()] = (clip_id, pcm)
+            upper_id = clip_id.upper()
+            _RECORDS_BY_ID_UPPER[upper_id] = (clip_id, pcm)
+            if entry.get("type") != "STATIC STEM":
+                _STANDALONE_TAG_IDS_UPPER.add(upper_id)
+
             norm = _normalize_text(entry["text"])
             if norm:
                 _RECORDS_BY_NORM_TEXT[norm] = (clip_id, pcm)
@@ -98,10 +116,43 @@ def _ensure_records_loaded() -> None:
         _STEMS_BY_TOKENS.extend(stems_tmp)
         logger.info(
             f"[PunicaTTS] Loaded {len(_RECORDS_BY_ID_UPPER)} static audio clips "
-            f"({len(_STEMS_BY_TOKENS)} stems) from {records_dir}"
+            f"({len(_STEMS_BY_TOKENS)} stems, {len(_STANDALONE_TAG_IDS_UPPER)} standalone) from {records_dir}"
         )
     except Exception as e:
         logger.error(f"[PunicaTTS] Failed loading static records from {records_dir}: {e}")
+
+
+class _PunicaTagAwareTextAggregator(SimpleTextAggregator):
+    """Flush standalone [BOX_*] and [BRIDGE_*] tags immediately upon closing ']'.
+
+    Mid-sentence stems (type == 'STATIC STEM', e.g. [BOX_01A_stem]) remain buffered
+    with their dynamic tail so stem + name stitching stays unchanged. Standalone
+    clips and opener bridges (e.g. [BOX_02A], [BRIDGE_LONG_02], [BOX_15A]) emit as
+    soon as ']' arrives from the LLM, starting studio audio playback immediately
+    while dynamic tokens continue streaming and synthesizing in the background.
+    """
+
+    async def aggregate(self, text: str) -> AsyncIterator[Aggregation]:
+        if self._aggregation_type == AggregationType.TOKEN:
+            if text:
+                yield Aggregation(text=text, type=AggregationType.TOKEN)
+            return
+
+        _ensure_records_loaded()
+        for char in text:
+            self._text += char
+            if char == "]":
+                match = _TRAILING_BRACKET_TAG_RE.match(self._text)
+                if match and match.group(3).upper() in _STANDALONE_TAG_IDS_UPPER:
+                    emitted = self._text.strip(" ")
+                    await self.reset()
+                    if emitted:
+                        yield Aggregation(text=emitted, type=AggregationType.SENTENCE)
+                    continue
+
+            result = await self._check_sentence_with_lookahead(char)
+            if result:
+                yield result
 
 
 def _trim_and_fade_pcm(
@@ -229,7 +280,8 @@ class PunicaTTSService(TTSService):
     """Punica AI Text-to-Speech service with static audio playback and parallel lookahead stitching.
 
     - Serves pre-recorded clips from /app/records in <1ms (0 Punica API cost).
-    - Launches concurrent live dido synthesis for dynamic tails while streaming static stems/bridges.
+    - Flushes standalone [BOX_*] / [BRIDGE_*] clips immediately on ']' while LLM tokens stream.
+    - Launches concurrent lossless WAV dido synthesis for dynamic tails while streaming static stems/bridges.
     - Persists trimmed live syntheses to disk cache to avoid redundant API calls.
     """
 
@@ -237,7 +289,7 @@ class PunicaTTSService(TTSService):
         self,
         *,
         api_key: str,
-        base_url: str = "https://punica.tn/api/v1",
+        base_url: str = DEFAULT_PUNICA_BASE_URL,
         model: str = "dido",
         voice: str = "dido",
         sample_rate: int = _SAMPLE_RATE,
@@ -246,6 +298,7 @@ class PunicaTTSService(TTSService):
     ):
         resolved_model = model or "dido"
         resolved_voice = voice or "dido"
+        resolved_base_url = base_url or DEFAULT_PUNICA_BASE_URL
         default_settings = TTSSettings(
             model=resolved_model,
             voice=resolved_voice,
@@ -263,16 +316,71 @@ class PunicaTTSService(TTSService):
             settings=default_settings,
             **kwargs,
         )
+        if self._text_aggregation_mode == TextAggregationMode.SENTENCE:
+            self._text_aggregator = _PunicaTagAwareTextAggregator(
+                aggregation_type=self._text_aggregation_mode,
+                language=self._text_aggregator.language,
+            )
         self._model = resolved_model
         self._voice = resolved_voice
         self._sample_rate = sample_rate
         self._cache_dir = _resolve_cache_dir()
-        self._client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
+        self._last_context_id: str | None = None
+        self._client = openai.AsyncOpenAI(
+            api_key=api_key,
+            base_url=resolved_base_url,
+            http_client=get_shared_punica_http_client(resolved_base_url),
+        )
         _ensure_records_loaded()
 
     def _cache_key(self, text: str) -> str:
         raw = f"{self._model}|{self._voice}|{self._sample_rate}|{text.strip()}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    def _is_cached(self, text: str) -> bool:
+        key = self._cache_key(text)
+        return (self._cache_dir / f"{key}.pcm").exists()
+
+    def prewarm_spoken_slots(
+        self, *, greeting: str | None = None, prompt: str | None = None
+    ) -> None:
+        """Pre-synthesize uncached dynamic slots in background using lossless WAV."""
+        candidate_utterances: list[str] = []
+        if greeting and greeting.strip():
+            candidate_utterances.append(greeting.strip())
+        if prompt:
+            for line in prompt.splitlines():
+                if _HYBRID_PROMPT_LINE_RE.match(line):
+                    candidate_utterances.append(line.strip())
+
+        if not candidate_utterances:
+            return
+
+        live_labels: list[str] = []
+        seen: set[str] = set()
+        for utterance in candidate_utterances:
+            for kind, label, _ in _parse_segments(utterance):
+                if kind == "live" and label not in seen and not self._is_cached(label):
+                    seen.add(label)
+                    live_labels.append(label)
+
+        if not live_labels:
+            return
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+
+        async def _warm_one(slot_text: str) -> None:
+            try:
+                await self._synthesize_live_pcm(slot_text)
+                logger.info(f"[PunicaTTS] Pre-warmed lossless slot cache: '{slot_text}'")
+            except Exception as exc:
+                logger.debug(f"[PunicaTTS] Background slot pre-warm skipped for '{slot_text}': {exc}")
+
+        for slot_text in live_labels:
+            loop.create_task(_warm_one(slot_text), name="punica-tts-prewarm")
 
     async def _synthesize_live_pcm(self, text: str) -> tuple[bytes, bool]:
         """Return (pcm_bytes, was_disk_cache_hit) for a dynamic sentence."""
@@ -321,6 +429,9 @@ class PunicaTTSService(TTSService):
         if not segments:
             return
 
+        is_continuation = context_id is not None and context_id == self._last_context_id
+        self._last_context_id = context_id
+
         # Pre-launch all live segments concurrently BEFORE yielding the first static audio chunk
         live_tasks: dict[int, tuple[asyncio.Task[tuple[bytes, bool]], float]] = {}
         for idx, (kind, label, _) in enumerate(segments):
@@ -337,7 +448,7 @@ class PunicaTTSService(TTSService):
 
         try:
             for idx, (kind, label, static_pcm) in enumerate(segments):
-                if idx > 0:
+                if idx > 0 or (idx == 0 and is_continuation):
                     yield TTSAudioRawFrame(
                         audio=_STITCH_GAP_BYTES,
                         sample_rate=self._sample_rate,

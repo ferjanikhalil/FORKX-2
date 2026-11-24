@@ -32,6 +32,10 @@ from api.services.configuration.registry import (
 )
 from api.services.configuration.temperature import resolve_temperature
 from api.services.pipecat.fallback_llm import FallbackLLMProcessor, FallbackRoute
+from api.services.pipecat.punica_http import (
+    DEFAULT_PUNICA_BASE_URL,
+    get_shared_punica_http_client,
+)
 from api.services.pipecat.punica_llm import PunicaLLMService
 from api.services.pipecat.punica_tts import PunicaTTSService
 from api.services.pipecat.gemini_json_schema_adapter import (
@@ -666,7 +670,7 @@ def create_stt_service(
             sample_rate=audio_config.transport_in_sample_rate,
         )
     elif user_config.stt.provider == ServiceProviders.PUNICA.value:
-        base_url = getattr(user_config.stt, "base_url", None) or "https://punica.tn/api/v1"
+        base_url = getattr(user_config.stt, "base_url", None) or DEFAULT_PUNICA_BASE_URL
         _validate_runtime_service_url(base_url, "base_url")
         return OpenAISTTService(
             api_key=user_config.stt.api_key,
@@ -675,6 +679,7 @@ def create_stt_service(
                 **configurable_settings,
             ),
             base_url=base_url,
+            http_client=get_shared_punica_http_client(base_url),
             should_interrupt=False,
         )
     elif user_config.stt.provider == ServiceProviders.OPENAI.value:
@@ -683,6 +688,8 @@ def create_stt_service(
         if base_url:
             _validate_runtime_service_url(base_url, "base_url")
             kwargs["base_url"] = base_url
+            if "punica.tn" in base_url.lower():
+                kwargs["http_client"] = get_shared_punica_http_client(base_url)
         return OpenAISTTService(
             api_key=user_config.stt.api_key,
             settings=OpenAISTTSettings(model=user_config.stt.model),

@@ -53,6 +53,7 @@ from api.services.pipecat.pipeline_builder import (
 from api.services.pipecat.pipeline_metrics_aggregator import PipelineMetricsAggregator
 from api.services.pipecat.pre_call_fetch import execute_pre_call_fetch_result
 from api.services.pipecat.processors.answer_supervisor import AnswerSupervisor
+from api.services.pipecat.punica_http import start_punica_call_keepalive
 from api.services.pipecat.realtime_feedback_events import (
     build_node_transition_event,
 )
@@ -236,6 +237,33 @@ def _create_non_realtime_user_turn_start_strategies(
     return [TranscriptionUserTurnStartStrategy(), VADUserTurnStartStrategy()]
 
 
+class VADAwareSpeechTimeoutUserTurnStopStrategy(SpeechTimeoutUserTurnStopStrategy):
+    """Preserve in-flight post-VAD silence timers when turn-start fires on finalized STT.
+
+    With segmented/batch STT (such as OpenAI or Punica) paired with
+    ``MinWordsUserTurnStartStrategy``, ``VADUserStoppedSpeakingFrame`` arrives and
+    starts ``_user_speech_timeout`` *before* ``TranscriptionFrame(finalized=True)``
+    arrives to start the user turn. Resetting ``_vad_stopped`` unconditionally in
+    ``handle_user_turn_started()`` discards that elapsed post-VAD silence window
+    and forces a redundant second 0.6s sleep after STT completes.
+    """
+
+    async def handle_user_turn_started(self):
+        if not self._vad_user_speaking and self._vad_stopped:
+            self._text = ""
+            return
+        await super().handle_user_turn_started()
+
+    async def _maybe_trigger_user_turn_stopped(self):
+        if self._vad_user_speaking:
+            return
+        if self._wait_for_transcript and not self._text:
+            return
+        if self._user_speech_wait_done and self._stt_wait_done:
+            self._vad_stopped = False
+            await self.trigger_user_turn_stopped()
+
+
 def _create_non_realtime_user_turn_stop_strategies(
     run_configs: dict, *, uses_external_turns: bool
 ):
@@ -256,7 +284,7 @@ def _create_non_realtime_user_turn_stop_strategies(
             )
         ]
 
-    return [SpeechTimeoutUserTurnStopStrategy()]
+    return [VADAwareSpeechTimeoutUserTurnStopStrategy()]
 
 
 def _create_realtime_user_turn_config(provider: str, model: str | None = None):
@@ -1317,6 +1345,7 @@ async def _run_pipeline_impl(
 
     register_audio_data_handler(audio_buffer, workflow_run_id, in_memory_audio_buffer)
 
+    punica_keepalive_task = start_punica_call_keepalive(user_config)
     try:
         # Run the pipeline
         await run_worker_runner(worker_runner, task)
@@ -1324,6 +1353,9 @@ async def _run_pipeline_impl(
     except asyncio.CancelledError:
         logger.warning("Received CancelledError in _run_pipeline")
     finally:
+        if punica_keepalive_task is not None and not punica_keepalive_task.done():
+            punica_keepalive_task.cancel()
+            await asyncio.gather(punica_keepalive_task, return_exceptions=True)
         # Close MCP sessions here, not in engine.cleanup(). The anyio cancel
         # scopes opened by MCPClient.start() in engine.initialize() are
         # task-affine; this finally runs in the same task as initialize(),
