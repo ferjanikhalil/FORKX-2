@@ -166,6 +166,30 @@ async def test_punica_services_share_non_closing_keepalive_http_pool():
     await llm._client.close()
     assert not shared.is_closed
 
+    # Verify full AsyncOpenAI request preparation (timeout + header math) succeeds end-to-end
+    import httpx
+
+    seen_auth: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_auth.append(request.headers.get("Authorization", ""))
+        return httpx.Response(200, content=_make_dummy_wav(), headers={"content-type": "audio/wav"})
+
+    orig_transport = shared._transport
+    shared._transport = httpx.MockTransport(handler)
+    try:
+        resp = await tts._client.audio.speech.create(
+            model="dido",
+            voice="dido",
+            input="سي خليل؟",
+            response_format="wav",
+        )
+        wav_bytes = await resp.aread()
+        assert len(wav_bytes) > 44
+        assert seen_auth == ["Bearer tts-key"]
+    finally:
+        shared._transport = orig_transport
+
 
 async def test_punica_tag_aggregator_flushes_standalone_bridges_immediately_not_stems():
     agg = _PunicaTagAwareTextAggregator(

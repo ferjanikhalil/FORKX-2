@@ -64,7 +64,6 @@ def get_shared_punica_http_client(
                 max_connections=100,
                 keepalive_expiry=60.0,
             ),
-            timeout=httpx.Timeout(60.0, connect=10.0),
         )
         _SHARED_CLIENTS[key] = client
     return client
