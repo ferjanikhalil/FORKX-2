@@ -164,6 +164,9 @@ COPY --from=ts-deps --chown=dograh:dograh /ts_validator/node_modules ./api/mcp_s
 # (search_dograh_docs / fetch_dograh_doc) so agents can learn Dograh.
 COPY --chown=dograh:dograh ./docs ./docs
 
+# Pre-recorded Tunisian Derja static audio library for PunicaTTSService.
+COPY --chown=dograh:dograh ./records ./records
+
 ENV PYTHONPATH=/app
 
 # Disable file logging in Docker - logs go to stdout for docker logs
