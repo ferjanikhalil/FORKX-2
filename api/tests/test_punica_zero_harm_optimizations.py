@@ -173,7 +173,9 @@ async def test_punica_services_share_non_closing_keepalive_http_pool():
     assert not shared.is_closed
 
     # Verify full AsyncOpenAI request preparation (timeout + header math) succeeds end-to-end
-    from openai._base_client import httpx as openai_httpx
+    import importlib
+
+    openai_httpx = importlib.import_module(type(shared._transport).__module__.split(".")[0])
 
     seen_auth: list[str] = []
 
