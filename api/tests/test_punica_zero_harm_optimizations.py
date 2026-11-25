@@ -273,7 +273,7 @@ async def test_manifest_loads_all_84_clips_including_new_cod_studio_clips():
     assert len(_RECORDS_BY_ID_UPPER) == 84
     assert len(_STEMS_BY_TOKENS) == 12
     assert len(_STANDALONE_TAG_IDS_UPPER) == 72
-    assert len(_OPENER_BRIDGE_IDS_UPPER) == 10
+    assert len(_OPENER_BRIDGE_IDS_UPPER) == 12
     for expected_new_id in (
         "BOX_24D",
         "BOX_15B",
