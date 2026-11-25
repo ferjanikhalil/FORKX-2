@@ -30,7 +30,13 @@ from api.services.pipecat.punica_http import (
 from api.services.pipecat.punica_llm import PunicaLLMService
 from api.services.pipecat.punica_tts import (
     PunicaTTSService,
+    _OPENER_BRIDGE_IDS_UPPER,
     _PunicaTagAwareTextAggregator,
+    _RECORDS_BY_ID_UPPER,
+    _STANDALONE_TAG_IDS_UPPER,
+    _STEMS_BY_TOKENS,
+    _ensure_records_loaded,
+    _parse_segments,
 )
 from api.services.pipecat.run_pipeline import (
     VADAwareSpeechTimeoutUserTurnStopStrategy,
@@ -260,3 +266,89 @@ async def test_prewarm_spoken_slots_warms_only_greeting_and_hybrid_lines_with_lo
         "عندك غالاكسي الترا بـ ألفين دينار بالتوصيل",
     ]
     assert all(c["response_format"] == "wav" for c in calls)
+
+
+async def test_manifest_loads_all_84_clips_including_new_cod_studio_clips():
+    _ensure_records_loaded()
+    assert len(_RECORDS_BY_ID_UPPER) == 84
+    assert len(_STEMS_BY_TOKENS) == 12
+    assert len(_STANDALONE_TAG_IDS_UPPER) == 72
+    assert len(_OPENER_BRIDGE_IDS_UPPER) == 10
+    for expected_new_id in (
+        "BOX_24D",
+        "BOX_15B",
+        "BOX_05C_STEM",
+        "BOX_02F_PRICE_STEM",
+        "BRIDGE_07",
+        "BRIDGE_08",
+    ):
+        assert expected_new_id in _RECORDS_BY_ID_UPPER
+
+
+async def test_cache_key_normalizes_edge_punctuation_and_honors_legacy_cache(tmp_path):
+    tts = PunicaTTSService(api_key="test-key", base_url=DEFAULT_PUNICA_BASE_URL)
+    tts._cache_dir = tmp_path
+
+    # Trailing/leading punctuation and extra whitespace map to the same normalized key
+    key_plain = tts._cache_key("عندك آيباد عشرة بالتوصيل")
+    key_punct = tts._cache_key("  عندك   آيباد عشرة بالتوصيل.، ")
+    assert key_plain == key_punct
+
+    # Legacy cache files written before _normalize_cache_text remain readable
+    legacy_text = "عنوانك أريانة النصر."
+    legacy_path = tmp_path / f"{tts._legacy_cache_key(legacy_text)}.pcm"
+    legacy_path.write_bytes(b"\x01\x00" * 240)
+    assert tts._is_cached(legacy_text)
+    pcm, hit = await tts._synthesize_live_pcm(legacy_text)
+    assert hit is True
+    assert pcm == b"\x01\x00" * 240
+
+
+async def test_bridge_echo_stripping_and_consecutive_opener_bridge_dedup(tmp_path):
+    tts = PunicaTTSService(api_key="test-key", base_url=DEFAULT_PUNICA_BASE_URL)
+    tts._cache_dir = tmp_path
+
+    calls: list[str] = []
+
+    async def fake_create(**kwargs):
+        calls.append(kwargs["input"])
+        return SimpleNamespace(aread=AsyncMock(return_value=_make_dummy_wav()))
+
+    tts._client.audio.speech.create = fake_create
+
+    # 1. Inline bridge echo stripping: LLM echoes [BRIDGE_03] transcript right after the tag
+    segs_inline = _parse_segments(
+        "[BRIDGE_03] على عيني، هاني نقيد فيها عندك: العنوان الجديد حي النصر أريانة."
+    )
+    assert [(k, lbl) for k, lbl, _ in segs_inline] == [
+        ("static", "BRIDGE_03"),
+        ("live", "العنوان الجديد حي النصر أريانة"),
+    ]
+
+    # 2. Inline accidental double opener bridge: keeps single longer bridge clip
+    segs_double_bridge = _parse_segments("[BRIDGE_04] [BOX_08A] السلعة متوفرة في الستوك.")
+    assert [(k, lbl) for k, lbl, _ in segs_double_bridge] == [
+        ("static", "BOX_08A"),
+        ("live", "السلعة متوفرة في الستوك"),
+    ]
+
+    # 3. Legitimate paired static clips (NOT two opener bridges) remain untouched
+    segs_valid_pair = _parse_segments("[BOX_15A] [BOX_02D]")
+    assert [(k, lbl) for k, lbl, _ in segs_valid_pair] == [
+        ("static", "BOX_15A"),
+        ("static", "BOX_02D"),
+    ]
+
+    # 4. Cross-continuation bridge echo stripping across two run_tts calls in the same context_id
+    tts.start_tts_usage_metrics = AsyncMock()
+    tts.stop_ttfb_metrics = AsyncMock()
+
+    async for _ in tts.run_tts("[BRIDGE_03]", "ctx-echo-1"):
+        pass
+    async for _ in tts.run_tts(
+        "على عيني هاني نقيد فيها عندك: التوصيل لحي النصر.", "ctx-echo-1"
+    ):
+        pass
+
+    assert calls == ["التوصيل لحي النصر"]
+

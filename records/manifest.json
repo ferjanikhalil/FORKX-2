@@ -934,5 +934,77 @@
     "type": "0ms OPENER BRIDGE",
     "duration_seconds": 6.7,
     "file_size_bytes": 321644
+  },
+  {
+    "id": "BOX_24D",
+    "filename": "BOX_24D_hear_you_clearly.wav",
+    "scenario": "Scenario 24: Audio Check - Hear Caller Clearly",
+    "part": "Part 7: Conversation Control, Audio Issues & Special Cases",
+    "text": "إيه نسمع فيك مليح وبالواضح! تفضل هاني معاك.",
+    "arabizi": "Ey nasma3 fik mlih w bil wadhah! Tfadhal hani m3ak.",
+    "meaning": "Yes, I can hear you loud and clear! Go ahead, I'm with you.",
+    "type": "STATIC CLIP",
+    "duration_seconds": 3.05,
+    "file_size_bytes": 146300
+  },
+  {
+    "id": "BOX_15B",
+    "filename": "BOX_15B_cash_only_no_card.wav",
+    "scenario": "Scenario 15: Payment Method (Cash Only - No Card/App)",
+    "part": "Part 5: Payment, Trust, Package Inspection & Warranty",
+    "text": "حالياً الخلاص يكون كاش برك عند الاستلام مع الليفرور، الدفع بالبطاقة وإلا بالتطبيقات موش متوفر توا. مريقل نأكدوها؟",
+    "arabizi": "Haliyan el khlas ykoun cash bark 3and el istilem m3a el livreur, eddaf3 bil bitaqa walla bil tatbiqat mouch moutawaffer tawa. Mriguel n'akkdouha?",
+    "meaning": "Currently payment is cash only upon delivery with the courier; card or app payment is not available right now. Shall we confirm it?",
+    "type": "STATIC CLIP",
+    "duration_seconds": 6.72,
+    "file_size_bytes": 322460
+  },
+  {
+    "id": "BOX_05C_stem",
+    "filename": "BOX_05C_store_intro_stem.wav",
+    "scenario": "Scenario 5: Store Identity Verification - Stem Prefix",
+    "part": "Part 1: Call Opening & Identity Verification",
+    "text": "مرحبا بيك! معاك خدمة الحرفاء متاع متجر",
+    "arabizi": "Marhba bik! M3ak khedmet el horafa mte3 matjar",
+    "meaning": "Welcome! This is customer service from store",
+    "type": "STATIC STEM",
+    "duration_seconds": 2.61,
+    "file_size_bytes": 125420
+  },
+  {
+    "id": "BOX_02F_price_stem",
+    "filename": "BOX_02F_price_total_stem.wav",
+    "scenario": "Scenario 2: Standalone Total Price Stem",
+    "part": "Part 1: Call Opening & Identity Verification",
+    "text": "السوم الجملي متاع الكوموند بالتوصيل هو",
+    "arabizi": "Essoum el jomli mte3 el commande bil tawsil howa",
+    "meaning": "The total price of the order including delivery is",
+    "type": "STATIC STEM",
+    "duration_seconds": 2.66,
+    "file_size_bytes": 127820
+  },
+  {
+    "id": "BRIDGE_07",
+    "filename": "BRIDGE_07_clarify_order.wav",
+    "scenario": "Scenario B9: Clarification / Misunderstanding Opener Bridge (~2.7s)",
+    "part": "Part 8: Zero-Latency Opener Bridge Micro-Clips",
+    "text": "سامحني كان ما فسرتلكش بالباهي، توا نوضحلك الكوموند بالضبط...",
+    "arabizi": "Samahni ken ma fassartlekch bil behi, tawa nwadhahlek el commande bedhabt...",
+    "meaning": "Sorry if I didn't explain clearly, let me clarify the exact order for you...",
+    "type": "0ms OPENER BRIDGE",
+    "duration_seconds": 4.33,
+    "file_size_bytes": 207980
+  },
+  {
+    "id": "BRIDGE_08",
+    "filename": "BRIDGE_08_verify_detail.wav",
+    "scenario": "Scenario B10: Medium Q&A Verification Bridge (~2.7s)",
+    "part": "Part 8: Zero-Latency Opener Bridge Micro-Clips",
+    "text": "واضح يعيشك، لحظة برك نتثبتلك من المعلومة بالضبط...",
+    "arabizi": "Wadhah y3aychek, lahdha bark nthabbetlek mel ma3louma bedhabt...",
+    "meaning": "Got it thank you, just a moment while I check that exact detail for you...",
+    "type": "0ms OPENER BRIDGE",
+    "duration_seconds": 3.67,
+    "file_size_bytes": 176300
   }
 ]

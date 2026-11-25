@@ -39,10 +39,13 @@ _HYBRID_PROMPT_LINE_RE = re.compile(
 )
 _DIACRITICS_RE = re.compile(r"[\u064B-\u065F\u0670\u0640]")
 _PUNCT_RE = re.compile(r"[،؛؟?!.:,\-\"'«»()\[\]{}…]")
+_CACHE_EDGE_PUNCT_RE = re.compile(r"^[،؛.:\-\s]+|[،؛.:\-\s]+$")
 
 _RECORDS_LOADED = False
 _RECORDS_BY_ID_UPPER: dict[str, tuple[str, bytes]] = {}
 _STANDALONE_TAG_IDS_UPPER: set[str] = set()
+_OPENER_BRIDGE_IDS_UPPER: set[str] = set()
+_RECORD_WORDS_BY_ID_UPPER: dict[str, list[str]] = {}
 _RECORDS_BY_NORM_TEXT: dict[str, tuple[str, bytes]] = {}
 _STEMS_BY_TOKENS: list[tuple[list[str], str, bytes]] = []
 
@@ -73,6 +76,13 @@ def _normalize_text(text: str) -> str:
     return s
 
 
+def _normalize_cache_text(text: str) -> str:
+    """Normalize harmless outer punctuation and whitespace while preserving pronunciation."""
+    cleaned = _CACHE_EDGE_PUNCT_RE.sub("", text.strip())
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned or text.strip()
+
+
 def _ensure_records_loaded() -> None:
     """Load pre-recorded 24kHz 16-bit mono PCM files from records/ into RAM once."""
     global _RECORDS_LOADED
@@ -100,17 +110,21 @@ def _ensure_records_loaded() -> None:
                 pcm = w.readframes(w.getnframes())
 
             upper_id = clip_id.upper()
+            entry_type = entry.get("type", "")
             _RECORDS_BY_ID_UPPER[upper_id] = (clip_id, pcm)
-            if entry.get("type") != "STATIC STEM":
+            if entry_type != "STATIC STEM":
                 _STANDALONE_TAG_IDS_UPPER.add(upper_id)
+            if entry_type == "0ms OPENER BRIDGE":
+                _OPENER_BRIDGE_IDS_UPPER.add(upper_id)
 
             norm = _normalize_text(entry["text"])
             if norm:
+                words = norm.split()
+                if words:
+                    _RECORD_WORDS_BY_ID_UPPER[upper_id] = words
                 _RECORDS_BY_NORM_TEXT[norm] = (clip_id, pcm)
-                if entry.get("type") == "STATIC STEM":
-                    tokens = norm.split()
-                    if tokens:
-                        stems_tmp.append((tokens, clip_id, pcm))
+                if entry_type == "STATIC STEM" and words:
+                    stems_tmp.append((words, clip_id, pcm))
 
         stems_tmp.sort(key=lambda item: len(item[0]), reverse=True)
         _STEMS_BY_TOKENS.extend(stems_tmp)
@@ -127,7 +141,7 @@ class _PunicaTagAwareTextAggregator(SimpleTextAggregator):
 
     Mid-sentence stems (type == 'STATIC STEM', e.g. [BOX_01A_stem]) remain buffered
     with their dynamic tail so stem + name stitching stays unchanged. Standalone
-    clips and opener bridges (e.g. [BOX_02A], [BRIDGE_LONG_02], [BOX_15A]) emit as
+    clips and opener bridges (e.g. [BOX_02A], [BRIDGE_08], [BOX_15A]) emit as
     soon as ']' arrives from the LLM, starting studio audio playback immediately
     while dynamic tokens continue streaming and synthesizing in the background.
     """
@@ -208,6 +222,45 @@ def _trim_and_fade_pcm(
     return trimmed.tobytes()
 
 
+def _strip_echoed_bridge_prefix(raw_text: str, prev_static_id: str | None) -> str:
+    """Strip duplicated leading words if the LLM echoed an opener bridge's transcript."""
+    if not prev_static_id:
+        return raw_text
+    upper_id = prev_static_id.upper()
+    if upper_id not in _OPENER_BRIDGE_IDS_UPPER:
+        return raw_text
+    bridge_words = _RECORD_WORDS_BY_ID_UPPER.get(upper_id)
+    if not bridge_words:
+        return raw_text
+
+    raw_tokens = raw_text.strip().split()
+    norm_tokens = [_normalize_text(t) for t in raw_tokens]
+    flat_norm: list[tuple[str, int]] = []
+    for raw_idx, nt in enumerate(norm_tokens):
+        if nt:
+            for sub in nt.split():
+                flat_norm.append((sub, raw_idx))
+
+    if not flat_norm:
+        return raw_text
+
+    matched = 0
+    max_check = min(len(bridge_words), len(flat_norm))
+    while matched < max_check and flat_norm[matched][0] == bridge_words[matched]:
+        matched += 1
+
+    min_required = min(2, len(bridge_words))
+    if matched < min_required:
+        return raw_text
+
+    if matched >= len(flat_norm):
+        return ""
+
+    next_raw_idx = flat_norm[matched][1]
+    stripped = " ".join(raw_tokens[next_raw_idx:]).strip()
+    return re.sub(r"^[،؛؟?!.\s:\-]+", "", stripped).strip()
+
+
 def _match_stem_prefix(raw_text: str) -> tuple[str, bytes, str] | None:
     """If raw_text starts with a pre-recorded STATIC STEM, return (stem_id, pcm, live_tail)."""
     raw_tokens = raw_text.strip().split()
@@ -234,10 +287,13 @@ def _match_stem_prefix(raw_text: str) -> tuple[str, bytes, str] | None:
     return None
 
 
-def _parse_segments(text: str) -> list[tuple[str, str, bytes | None]]:
+def _parse_segments(
+    text: str, *, prev_static_id: str | None = None
+) -> list[tuple[str, str, bytes | None]]:
     """Split utterance into ordered ('static', box_id, pcm) and ('live', text, None) segments."""
     _ensure_records_loaded()
     segments: list[tuple[str, str, bytes | None]] = []
+    active_prev_static = prev_static_id
 
     for part in _TAG_PATTERN.split(text):
         if not part or not part.strip():
@@ -249,7 +305,22 @@ def _parse_segments(text: str) -> list[tuple[str, str, bytes | None]]:
             hit = _RECORDS_BY_ID_UPPER.get(key)
             if hit:
                 clip_id, pcm = hit
+                # Deduplicate accidental back-to-back opener bridges (e.g. [BRIDGE_04] [BOX_08A])
+                if (
+                    key in _OPENER_BRIDGE_IDS_UPPER
+                    and active_prev_static
+                    and active_prev_static.upper() in _OPENER_BRIDGE_IDS_UPPER
+                ):
+                    if segments and segments[-1][0] == "static":
+                        # Inline consecutive bridges: keep the longer bridge clip
+                        prev_pcm = segments[-1][2] or b""
+                        if len(pcm) > len(prev_pcm):
+                            segments[-1] = ("static", clip_id, pcm)
+                            active_prev_static = clip_id
+                    # Cross-call continuation after an already-played bridge: skip duplicate bridge
+                    continue
                 segments.append(("static", clip_id, pcm))
+                active_prev_static = clip_id
                 continue
 
         # Clean stray leading/trailing punctuation left around inline [BOX_...] tags
@@ -257,21 +328,30 @@ def _parse_segments(text: str) -> list[tuple[str, str, bytes | None]]:
         if not cleaned or not _normalize_text(cleaned):
             continue
 
+        # Strip echoed opener-bridge transcript if the LLM repeated the bridge text
+        cleaned = _strip_echoed_bridge_prefix(cleaned, active_prev_static)
+        if not cleaned or not _normalize_text(cleaned):
+            continue
+
         norm = _normalize_text(cleaned)
         if norm in _RECORDS_BY_NORM_TEXT:
             clip_id, pcm = _RECORDS_BY_NORM_TEXT[norm]
             segments.append(("static", clip_id, pcm))
+            active_prev_static = clip_id
             continue
 
         stem_hit = _match_stem_prefix(cleaned)
         if stem_hit is not None:
             stem_id, stem_pcm, tail = stem_hit
             segments.append(("static", stem_id, stem_pcm))
+            active_prev_static = stem_id
             if tail and _normalize_text(tail):
                 segments.append(("live", tail, None))
+                active_prev_static = None
             continue
 
         segments.append(("live", cleaned, None))
+        active_prev_static = None
 
     return segments
 
@@ -326,6 +406,7 @@ class PunicaTTSService(TTSService):
         self._sample_rate = sample_rate
         self._cache_dir = _resolve_cache_dir()
         self._last_context_id: str | None = None
+        self._last_static_id_in_context: str | None = None
         self._client = openai.AsyncOpenAI(
             api_key=api_key,
             base_url=resolved_base_url,
@@ -334,12 +415,25 @@ class PunicaTTSService(TTSService):
         _ensure_records_loaded()
 
     def _cache_key(self, text: str) -> str:
+        norm_txt = _normalize_cache_text(text)
+        raw = f"{self._model}|{self._voice}|{self._sample_rate}|{norm_txt}"
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    def _legacy_cache_key(self, text: str) -> str:
         raw = f"{self._model}|{self._voice}|{self._sample_rate}|{text.strip()}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
+    def _find_cached_pcm_path(self, text: str) -> Path | None:
+        primary = self._cache_dir / f"{self._cache_key(text)}.pcm"
+        if primary.exists():
+            return primary
+        legacy = self._cache_dir / f"{self._legacy_cache_key(text)}.pcm"
+        if legacy.exists():
+            return legacy
+        return None
+
     def _is_cached(self, text: str) -> bool:
-        key = self._cache_key(text)
-        return (self._cache_dir / f"{key}.pcm").exists()
+        return self._find_cached_pcm_path(text) is not None
 
     def prewarm_spoken_slots(
         self, *, greeting: str | None = None, prompt: str | None = None
@@ -360,8 +454,9 @@ class PunicaTTSService(TTSService):
         seen: set[str] = set()
         for utterance in candidate_utterances:
             for kind, label, _ in _parse_segments(utterance):
-                if kind == "live" and label not in seen and not self._is_cached(label):
-                    seen.add(label)
+                norm_label = _normalize_cache_text(label)
+                if kind == "live" and norm_label not in seen and not self._is_cached(label):
+                    seen.add(norm_label)
                     live_labels.append(label)
 
         if not live_labels:
@@ -384,16 +479,18 @@ class PunicaTTSService(TTSService):
 
     async def _synthesize_live_pcm(self, text: str) -> tuple[bytes, bool]:
         """Return (pcm_bytes, was_disk_cache_hit) for a dynamic sentence."""
+        existing = self._find_cached_pcm_path(text)
+        if existing is not None:
+            return existing.read_bytes(), True
+
         key = self._cache_key(text)
         pcm_path = self._cache_dir / f"{key}.pcm"
-        if pcm_path.exists():
-            return pcm_path.read_bytes(), True
 
         async def _fetch_and_cache() -> bytes:
             response = await self._client.audio.speech.create(
                 model=self._model,
                 voice=self._voice,
-                input=text,
+                input=_normalize_cache_text(text),
                 response_format="wav",
             )
             raw_wav = await response.aread()
@@ -425,12 +522,16 @@ class PunicaTTSService(TTSService):
             return
 
         t0 = time.perf_counter()
-        segments = _parse_segments(text)
+        is_continuation = context_id is not None and context_id == self._last_context_id
+        prev_static = self._last_static_id_in_context if is_continuation else None
+        segments = _parse_segments(text, prev_static_id=prev_static)
         if not segments:
             return
 
-        is_continuation = context_id is not None and context_id == self._last_context_id
         self._last_context_id = context_id
+        self._last_static_id_in_context = (
+            segments[-1][1] if segments[-1][0] == "static" else None
+        )
 
         # Pre-launch all live segments concurrently BEFORE yielding the first static audio chunk
         live_tasks: dict[int, tuple[asyncio.Task[tuple[bytes, bool]], float]] = {}
