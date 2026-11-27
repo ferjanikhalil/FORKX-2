@@ -324,7 +324,7 @@ def _parse_segments(
     _ensure_records_loaded()
     segments: list[tuple[str, str, bytes | None]] = []
     active_prev_static = prev_static_id
-    active_ended_with_question = prev_ended_with_question
+    active_had_question = prev_ended_with_question
 
     for part in _TAG_PATTERN.split(text):
         if not part or not part.strip():
@@ -336,8 +336,8 @@ def _parse_segments(
             hit = _RECORDS_BY_ID_UPPER.get(key)
             if hit:
                 clip_id, pcm = hit
-                # Prevent double conflicting questions (e.g. "أما لون تحب؟ [BOX_02D]")
-                if key in _CONFIRM_QUESTION_TAG_IDS_UPPER and active_ended_with_question:
+                # Prevent double questions in the same turn (adjacent or separated by a declarative clip)
+                if key in _CONFIRM_QUESTION_TAG_IDS_UPPER and active_had_question:
                     continue
                 # Deduplicate accidental back-to-back opener bridges (e.g. [BRIDGE_04] [BOX_08A])
                 if (
@@ -351,15 +351,17 @@ def _parse_segments(
                         if len(pcm) > len(prev_pcm):
                             segments[-1] = ("static", clip_id, pcm)
                             active_prev_static = clip_id
-                            active_ended_with_question = _segment_ends_with_question(
-                                "static", clip_id
+                            active_had_question = (
+                                active_had_question
+                                or _segment_ends_with_question("static", clip_id)
                             )
                     # Cross-call continuation after an already-played bridge: skip duplicate bridge
                     continue
                 segments.append(("static", clip_id, pcm))
                 active_prev_static = clip_id
-                active_ended_with_question = _segment_ends_with_question(
-                    "static", clip_id
+                active_had_question = (
+                    active_had_question
+                    or _segment_ends_with_question("static", clip_id)
                 )
                 continue
 
@@ -385,12 +387,14 @@ def _parse_segments(
             clip_id, pcm = _RECORDS_BY_NORM_TEXT[norm]
             if (
                 clip_id.upper() in _CONFIRM_QUESTION_TAG_IDS_UPPER
-                and active_ended_with_question
+                and active_had_question
             ):
                 continue
             segments.append(("static", clip_id, pcm))
             active_prev_static = clip_id
-            active_ended_with_question = _segment_ends_with_question("static", clip_id)
+            active_had_question = active_had_question or _segment_ends_with_question(
+                "static", clip_id
+            )
             continue
 
         stem_hit = _match_stem_prefix(cleaned)
@@ -398,16 +402,22 @@ def _parse_segments(
             stem_id, stem_pcm, tail = stem_hit
             segments.append(("static", stem_id, stem_pcm))
             active_prev_static = stem_id
-            active_ended_with_question = _segment_ends_with_question("static", stem_id)
+            active_had_question = active_had_question or _segment_ends_with_question(
+                "static", stem_id
+            )
             if tail and _normalize_text(tail):
                 segments.append(("live", tail, None))
                 active_prev_static = None
-                active_ended_with_question = _segment_ends_with_question("live", tail)
+                active_had_question = (
+                    active_had_question or _segment_ends_with_question("live", tail)
+                )
             continue
 
         segments.append(("live", cleaned, None))
         active_prev_static = None
-        active_ended_with_question = _segment_ends_with_question("live", cleaned)
+        active_had_question = active_had_question or _segment_ends_with_question(
+            "live", cleaned
+        )
 
     return segments
 
@@ -597,8 +607,9 @@ class PunicaTTSService(TTSService):
         self._last_static_id_in_context = (
             segments[-1][1] if segments[-1][0] == "static" else None
         )
-        self._last_ended_with_question_in_context = _segment_ends_with_question(
-            segments[-1][0], segments[-1][1]
+        self._last_ended_with_question_in_context = prev_question or any(
+            _segment_ends_with_question(seg_kind, seg_label)
+            for seg_kind, seg_label, _ in segments
         )
 
         # Pre-launch all live segments concurrently BEFORE yielding the first static audio chunk

@@ -400,6 +400,20 @@ async def test_double_question_and_self_contained_prompt_safeguards(tmp_path):
     assert len(frames_q) > 0
     assert frames_dup_tag == []
 
+    # 3b. Compound objection with an earlier question clip ([BOX_19B]) + declarative ([BOX_17B]) drops trailing [BOX_02D]
+    segs_compound_q = _parse_segments("[BOX_19B] [BOX_17B] [BOX_02D]")
+    assert [(k, lbl) for k, lbl, _ in segs_compound_q] == [
+        ("static", "BOX_19B"),
+        ("static", "BOX_17B"),
+    ]
+    # Whereas declarative [BOX_19A] + [BOX_17B] + [BOX_02D] keeps the single closing question [BOX_02D]
+    segs_compound_decl = _parse_segments("[BOX_19A] [BOX_17B] [BOX_02D]")
+    assert [(k, lbl) for k, lbl, _ in segs_compound_decl] == [
+        ("static", "BOX_19A"),
+        ("static", "BOX_17B"),
+        ("static", "BOX_02D"),
+    ]
+
     # 4. Self-contained prompt clips ([BOX_10A], [BOX_30A]) drop redundant trailing live text
     segs_phone = _parse_segments("[BOX_10A] عطيني النومرو الثاني ونتسجلو مع التوصيل.")
     assert [(k, lbl) for k, lbl, _ in segs_phone] == [("static", "BOX_10A")]
