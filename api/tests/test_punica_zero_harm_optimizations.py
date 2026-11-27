@@ -356,3 +356,71 @@ async def test_bridge_echo_stripping_and_consecutive_opener_bridge_dedup(tmp_pat
 
     assert calls == ["التوصيل لحي النصر"]
 
+
+async def test_double_question_and_self_contained_prompt_safeguards(tmp_path):
+    import json
+    import re
+    from pathlib import Path
+
+    tts = PunicaTTSService(api_key="test-key", base_url=DEFAULT_PUNICA_BASE_URL)
+    tts._cache_dir = tmp_path
+    tts.start_tts_usage_metrics = AsyncMock()
+    tts.stop_ttfb_metrics = AsyncMock()
+
+    calls: list[str] = []
+
+    async def fake_create(**kwargs):
+        calls.append(kwargs["input"])
+        return SimpleNamespace(aread=AsyncMock(return_value=_make_dummy_wav()))
+
+    tts._client.audio.speech.create = fake_create
+
+    # 1. Inline open question followed by [BOX_02D] drops redundant [BOX_02D]
+    segs_double_q = _parse_segments(
+        "[BRIDGE_06] الألوان المتوفرة رمادي وأزرق. شنوة اللون إلي تحب نبدلولو؟ [BOX_02D]"
+    )
+    assert [(k, lbl) for k, lbl, _ in segs_double_q] == [
+        ("static", "BRIDGE_06"),
+        ("live", "الألوان المتوفرة رمادي وأزرق. شنوة اللون إلي تحب نبدلولو؟"),
+    ]
+
+    # 2. Normal declarative statement followed by [BOX_02D] keeps [BOX_02D]
+    segs_normal = _parse_segments(
+        "[BOX_02B] عندك آيباد الجيل العاشر بـ ألف وثلاث مية وتسعين دينار لـ حي النصر ثنين أريانة. [BOX_02D]"
+    )
+    assert [(k, lbl) for k, lbl, _ in segs_normal] == [
+        ("static", "BOX_02B"),
+        ("live", "عندك آيباد الجيل العاشر بـ ألف وثلاث مية وتسعين دينار لـ حي النصر ثنين أريانة"),
+        ("static", "BOX_02D"),
+    ]
+
+    # 3. Cross-continuation streaming: live question chunk then [BOX_02D] chunk in same context_id
+    frames_q = [f async for f in tts.run_tts("شنوة اللون إلي تحب؟", "ctx-q-1")]
+    frames_dup_tag = [f async for f in tts.run_tts("[BOX_02D]", "ctx-q-1")]
+    assert len(frames_q) > 0
+    assert frames_dup_tag == []
+
+    # 4. Self-contained prompt clips ([BOX_10A], [BOX_30A]) drop redundant trailing live text
+    segs_phone = _parse_segments("[BOX_10A] عطيني النومرو الثاني ونتسجلو مع التوصيل.")
+    assert [(k, lbl) for k, lbl, _ in segs_phone] == [("static", "BOX_10A")]
+
+    segs_fr = _parse_segments("[BOX_30A] Je vous appelle de la part de Tunis Tech.")
+    assert [(k, lbl) for k, lbl, _ in segs_fr] == [("static", "BOX_30A")]
+
+    # 5. Every [BOX_*] / [BRIDGE_*] tag in workflow_2_production_dynamic_cod.json exists in manifest
+    wf_path = (
+        Path(__file__).resolve().parents[2]
+        / "workflows"
+        / "workflow_2_production_dynamic_cod.json"
+    )
+    wf_raw = wf_path.read_text(encoding="utf-8")
+    json.loads(wf_raw)  # valid JSON
+    wf_tags = {
+        m.upper()
+        for m in re.findall(r"\[((?:BOX|BRIDGE)_[A-Za-z0-9_]+)\]", wf_raw)
+    }
+    assert len(wf_tags) >= 50
+    missing = wf_tags - set(_RECORDS_BY_ID_UPPER.keys())
+    assert missing == set(), f"Workflow #2 references missing tags: {missing}"
+
+

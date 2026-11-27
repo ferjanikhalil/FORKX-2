@@ -45,9 +45,28 @@ _RECORDS_LOADED = False
 _RECORDS_BY_ID_UPPER: dict[str, tuple[str, bytes]] = {}
 _STANDALONE_TAG_IDS_UPPER: set[str] = set()
 _OPENER_BRIDGE_IDS_UPPER: set[str] = set()
+_QUESTION_TAG_IDS_UPPER: set[str] = set()
 _RECORD_WORDS_BY_ID_UPPER: dict[str, list[str]] = {}
 _RECORDS_BY_NORM_TEXT: dict[str, tuple[str, bytes]] = {}
 _STEMS_BY_TOKENS: list[tuple[list[str], str, bytes]] = []
+
+# Trailing confirmation question clips that must never stack right after another question
+_CONFIRM_QUESTION_TAG_IDS_UPPER = frozenset({"BOX_02D", "BOX_02E"})
+
+# Self-contained prompt clips that already ask for input or wait on the line (no live tail echo)
+_SELF_CONTAINED_PROMPT_TAG_IDS_UPPER = frozenset(
+    {
+        "BOX_08B",
+        "BOX_10A",
+        "BOX_10B",
+        "BOX_12B",
+        "BOX_24A",
+        "BOX_24B",
+        "BOX_24D",
+        "BOX_25A",
+        "BOX_30A",
+    }
+)
 
 _INFLIGHT_SYNTHESIS: dict[str, asyncio.Task[bytes]] = {}
 
@@ -116,6 +135,8 @@ def _ensure_records_loaded() -> None:
                 _STANDALONE_TAG_IDS_UPPER.add(upper_id)
             if entry_type == "0ms OPENER BRIDGE":
                 _OPENER_BRIDGE_IDS_UPPER.add(upper_id)
+            if entry.get("text", "").rstrip().endswith(("?", "؟")):
+                _QUESTION_TAG_IDS_UPPER.add(upper_id)
 
             norm = _normalize_text(entry["text"])
             if norm:
@@ -287,13 +308,23 @@ def _match_stem_prefix(raw_text: str) -> tuple[str, bytes, str] | None:
     return None
 
 
+def _segment_ends_with_question(kind: str, label: str) -> bool:
+    if kind == "static":
+        return label.upper() in _QUESTION_TAG_IDS_UPPER
+    return label.rstrip().endswith(("?", "؟"))
+
+
 def _parse_segments(
-    text: str, *, prev_static_id: str | None = None
+    text: str,
+    *,
+    prev_static_id: str | None = None,
+    prev_ended_with_question: bool = False,
 ) -> list[tuple[str, str, bytes | None]]:
     """Split utterance into ordered ('static', box_id, pcm) and ('live', text, None) segments."""
     _ensure_records_loaded()
     segments: list[tuple[str, str, bytes | None]] = []
     active_prev_static = prev_static_id
+    active_ended_with_question = prev_ended_with_question
 
     for part in _TAG_PATTERN.split(text):
         if not part or not part.strip():
@@ -305,6 +336,9 @@ def _parse_segments(
             hit = _RECORDS_BY_ID_UPPER.get(key)
             if hit:
                 clip_id, pcm = hit
+                # Prevent double conflicting questions (e.g. "أما لون تحب؟ [BOX_02D]")
+                if key in _CONFIRM_QUESTION_TAG_IDS_UPPER and active_ended_with_question:
+                    continue
                 # Deduplicate accidental back-to-back opener bridges (e.g. [BRIDGE_04] [BOX_08A])
                 if (
                     key in _OPENER_BRIDGE_IDS_UPPER
@@ -317,15 +351,28 @@ def _parse_segments(
                         if len(pcm) > len(prev_pcm):
                             segments[-1] = ("static", clip_id, pcm)
                             active_prev_static = clip_id
+                            active_ended_with_question = _segment_ends_with_question(
+                                "static", clip_id
+                            )
                     # Cross-call continuation after an already-played bridge: skip duplicate bridge
                     continue
                 segments.append(("static", clip_id, pcm))
                 active_prev_static = clip_id
+                active_ended_with_question = _segment_ends_with_question(
+                    "static", clip_id
+                )
                 continue
 
         # Clean stray leading/trailing punctuation left around inline [BOX_...] tags
         cleaned = re.sub(r"^[،؛؟?!.\s:\-]+|[،؛.\s:\-]+$", "", part).strip()
         if not cleaned or not _normalize_text(cleaned):
+            continue
+
+        # Suppress redundant live TTS appended after self-contained prompt clips (e.g. [BOX_10A], [BOX_30A])
+        if (
+            active_prev_static
+            and active_prev_static.upper() in _SELF_CONTAINED_PROMPT_TAG_IDS_UPPER
+        ):
             continue
 
         # Strip echoed opener-bridge transcript if the LLM repeated the bridge text
@@ -336,8 +383,14 @@ def _parse_segments(
         norm = _normalize_text(cleaned)
         if norm in _RECORDS_BY_NORM_TEXT:
             clip_id, pcm = _RECORDS_BY_NORM_TEXT[norm]
+            if (
+                clip_id.upper() in _CONFIRM_QUESTION_TAG_IDS_UPPER
+                and active_ended_with_question
+            ):
+                continue
             segments.append(("static", clip_id, pcm))
             active_prev_static = clip_id
+            active_ended_with_question = _segment_ends_with_question("static", clip_id)
             continue
 
         stem_hit = _match_stem_prefix(cleaned)
@@ -345,13 +398,16 @@ def _parse_segments(
             stem_id, stem_pcm, tail = stem_hit
             segments.append(("static", stem_id, stem_pcm))
             active_prev_static = stem_id
+            active_ended_with_question = _segment_ends_with_question("static", stem_id)
             if tail and _normalize_text(tail):
                 segments.append(("live", tail, None))
                 active_prev_static = None
+                active_ended_with_question = _segment_ends_with_question("live", tail)
             continue
 
         segments.append(("live", cleaned, None))
         active_prev_static = None
+        active_ended_with_question = _segment_ends_with_question("live", cleaned)
 
     return segments
 
@@ -407,6 +463,7 @@ class PunicaTTSService(TTSService):
         self._cache_dir = _resolve_cache_dir()
         self._last_context_id: str | None = None
         self._last_static_id_in_context: str | None = None
+        self._last_ended_with_question_in_context: bool = False
         self._client = openai.AsyncOpenAI(
             api_key=api_key,
             base_url=resolved_base_url,
@@ -524,13 +581,24 @@ class PunicaTTSService(TTSService):
         t0 = time.perf_counter()
         is_continuation = context_id is not None and context_id == self._last_context_id
         prev_static = self._last_static_id_in_context if is_continuation else None
-        segments = _parse_segments(text, prev_static_id=prev_static)
+        prev_question = (
+            self._last_ended_with_question_in_context if is_continuation else False
+        )
+        segments = _parse_segments(
+            text,
+            prev_static_id=prev_static,
+            prev_ended_with_question=prev_question,
+        )
         if not segments:
+            self._last_context_id = context_id
             return
 
         self._last_context_id = context_id
         self._last_static_id_in_context = (
             segments[-1][1] if segments[-1][0] == "static" else None
+        )
+        self._last_ended_with_question_in_context = _segment_ends_with_question(
+            segments[-1][0], segments[-1][1]
         )
 
         # Pre-launch all live segments concurrently BEFORE yielding the first static audio chunk

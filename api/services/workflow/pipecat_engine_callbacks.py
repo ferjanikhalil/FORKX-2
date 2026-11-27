@@ -10,6 +10,7 @@ unit-testing.
 
 from __future__ import annotations
 
+import asyncio
 import re
 from typing import TYPE_CHECKING
 
@@ -27,6 +28,8 @@ if TYPE_CHECKING:
 # User-idle handling
 # ---------------------------------------------------------------------------
 
+USER_IDLE_FAREWELL_TIMEOUT_SECONDS = 12.0
+
 
 async def handle_user_idle(engine: "PipecatEngine", aggregator, attempt: int) -> None:
     """Execute the monitor's idle decision; timing and retry state live there."""
@@ -36,10 +39,26 @@ async def handle_user_idle(engine: "PipecatEngine", aggregator, attempt: int) ->
         if attempt == 1
         else "The user has been quiet. We will be disconnecting the call now. Wish them a good day in the language that the user has been speaking so far."
     )
+    closing_speech = None
+    speech_playback = getattr(engine, "speech_playback", None)
+    active_agent = getattr(engine, "active_agent", None)
+    if attempt > 1 and speech_playback is not None and active_agent is not None:
+        closing_speech = speech_playback.expect_response(source=active_agent.llm)
+
     await aggregator.push_frame(
         LLMMessagesAppendFrame([{"role": "user", "content": content}], run_llm=True)
     )
     if attempt > 1:
+        if closing_speech is not None:
+            try:
+                await asyncio.wait_for(
+                    closing_speech.wait(),
+                    timeout=USER_IDLE_FAREWELL_TIMEOUT_SECONDS,
+                )
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "Timed out waiting for user-idle farewell speech before disconnect"
+                )
         await engine.end_call_with_reason(
             EndTaskReason.USER_IDLE_MAX_DURATION_EXCEEDED.value
         )

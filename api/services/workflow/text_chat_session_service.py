@@ -210,6 +210,7 @@ def _build_text_chat_completion_write(
     disposition: str,
     mapped_disposition: str,
     extracted: dict[str, Any],
+    call_status: str | None = None,
 ) -> dict[str, Any]:
     """Project one session snapshot into the completion write's arguments.
 
@@ -221,10 +222,12 @@ def _build_text_chat_completion_write(
     completed_session_data = normalize_text_chat_session_data(text_session.session_data)
     completed_session_data["status"] = "completed"
 
+    resolved_call_status = call_status or disposition
     gathered_context = workflow_run.gathered_context or {}
     call_tags = list(gathered_context.get("call_tags") or [])
-    if disposition not in call_tags:
-        call_tags.append(disposition)
+    for tag in (resolved_call_status, disposition):
+        if tag and tag not in call_tags:
+            call_tags.append(tag)
     # A workflow author turns an extracted variable into a call tag by naming it
     # `tag_*`; PipecatEngine.record_call_tags does this promotion on the voice
     # path, after extraction has landed.
@@ -247,9 +250,9 @@ def _build_text_chat_completion_write(
             **extracted,
             "call_disposition": disposition,
             "mapped_call_disposition": mapped_disposition,
-            # Text chats end on an explicit completion reason rather than a
-            # teardown Dograh observed, so mechanism and outcome coincide.
-            "call_status": disposition,
+            # Preserve the observable termination mechanism even when
+            # call_disposition is refined into a business outcome.
+            "call_status": resolved_call_status,
             "call_tags": call_tags,
         },
         "logs": {
@@ -289,16 +292,12 @@ async def complete_text_chat_session(
         return await _reload_text_chat_session(run_id)
 
     completed_at = completed_at or datetime.now(UTC)
-    disposition = completion_reason
-    mapped_disposition = await map_disposition(
-        workflow_run.workflow.organization_id, disposition
-    )
 
     # A voice call extracts the current node's variables during engine teardown.
     # Text chat has no engine here, and a chat the user walks away from never
     # transitions, so without this the node's variables are never extracted at
     # all -- and the webhooks rendered from gathered_context ship blanks.
-    extracted = await extract_text_chat_final_variables(
+    raw_extracted = await extract_text_chat_final_variables(
         workflow_run_id=run_id,
         workflow_id=workflow_run.workflow_id,
         # The organization this call was already authorized against, so the
@@ -309,6 +308,16 @@ async def complete_text_chat_session(
         # message is only in session_data until it executes. The transcript
         # reads it from there; so must extraction.
         session_data=normalize_text_chat_session_data(text_session.session_data),
+    )
+    extracted = dict(raw_extracted or {})
+    refined_disposition = extracted.pop("call_disposition", None)
+    disposition = (
+        refined_disposition
+        if refined_disposition and completion_reason == EndTaskReason.USER_HANGUP.value
+        else completion_reason
+    )
+    mapped_disposition = await map_disposition(
+        workflow_run.workflow.organization_id, disposition
     )
 
     # The snapshot this write is built from was read before the extraction
@@ -329,6 +338,7 @@ async def complete_text_chat_session(
                 disposition=disposition,
                 mapped_disposition=mapped_disposition,
                 extracted=extracted,
+                call_status=completion_reason,
             ),
         )
     except WorkflowRunTextSessionRevisionConflictError as e:
@@ -357,6 +367,7 @@ async def complete_text_chat_session(
                     disposition=disposition,
                     mapped_disposition=mapped_disposition,
                     extracted=extracted,
+                    call_status=completion_reason,
                 ),
             )
         except WorkflowRunTextSessionRevisionConflictError as retry_error:

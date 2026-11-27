@@ -55,3 +55,39 @@ async def test_user_idle_handler_uses_realtime_append_path():
             "content": "The user has been quiet. Politely and briefly ask if they're still there in the language that the user has been speaking so far.",
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_user_idle_second_attempt_waits_for_farewell_speech_before_end_call():
+    order: list[str] = []
+
+    async def wait_speech():
+        order.append("farewell_played")
+
+    closing_speech = SimpleNamespace(wait=AsyncMock(side_effect=wait_speech))
+    speech_playback = SimpleNamespace(
+        expect_response=lambda source: closing_speech
+    )
+    active_agent = SimpleNamespace(llm=object())
+
+    async def end_call(reason):
+        order.append(f"end_call:{reason}")
+
+    async def push_frame(frame):
+        order.append("push_frame")
+
+    engine = SimpleNamespace(
+        speech_playback=speech_playback,
+        active_agent=active_agent,
+        end_call_with_reason=AsyncMock(side_effect=end_call),
+    )
+    aggregator = SimpleNamespace(push_frame=AsyncMock(side_effect=push_frame))
+
+    await handle_user_idle(engine, aggregator, 2)
+
+    assert order == [
+        "push_frame",
+        "farewell_played",
+        "end_call:user_idle_max_duration_exceeded",
+    ]
+

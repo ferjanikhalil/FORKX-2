@@ -501,3 +501,73 @@ async def test_finalization_handoff_requires_a_completed_text_chat(
 
     enqueue.assert_not_awaited()
     upload.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_complete_text_chat_session_refines_disposition_while_preserving_call_status(
+    monkeypatch,
+):
+    started_at = datetime(2026, 8, 5, 10, 0, tzinfo=UTC)
+    completed_at = started_at + timedelta(seconds=30)
+    session = SimpleNamespace(
+        revision=2,
+        created_at=started_at,
+        session_data={"status": "idle", "turns": []},
+        checkpoint={"current_node_id": "1"},
+        workflow_run=SimpleNamespace(
+            is_completed=False,
+            workflow_id=2,
+            created_at=started_at,
+            gathered_context={},
+            usage_info={},
+            workflow=SimpleNamespace(organization_id=7),
+        ),
+    )
+    reloaded = SimpleNamespace()
+    complete_session = AsyncMock()
+    monkeypatch.setattr(
+        text_chat_session_service.db_client,
+        "complete_workflow_run_text_session",
+        complete_session,
+    )
+    monkeypatch.setattr(
+        text_chat_session_service, "_enqueue_text_chat_completion", AsyncMock()
+    )
+    monkeypatch.setattr(
+        text_chat_session_service, "_upload_text_chat_transcript", AsyncMock()
+    )
+    monkeypatch.setattr(
+        text_chat_session_service,
+        "_reload_text_chat_session",
+        AsyncMock(return_value=reloaded),
+    )
+    monkeypatch.setattr(
+        text_chat_session_service,
+        "extract_text_chat_final_variables",
+        AsyncMock(
+            return_value={
+                "confirmed_address": "none",
+                "call_disposition": "human_handoff_requested",
+                "extracted_variables": {"confirmed_address": "none"},
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        text_chat_session_service,
+        "map_disposition",
+        AsyncMock(return_value="XFER_HUMAN"),
+    )
+
+    await complete_text_chat_session(
+        run_id=99,
+        text_session=session,
+        expected_revision=2,
+        completed_at=completed_at,
+    )
+
+    gc = complete_session.await_args.kwargs["gathered_context"]
+    assert gc["call_status"] == "user_hangup"
+    assert gc["call_disposition"] == "human_handoff_requested"
+    assert gc["mapped_call_disposition"] == "XFER_HUMAN"
+    assert gc["call_tags"] == ["user_hangup", "human_handoff_requested"]
+

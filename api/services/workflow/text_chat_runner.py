@@ -62,6 +62,7 @@ from api.services.pipecat.worker_runner import (
     run_pipeline_worker,
     wait_for_pipeline_worker_started,
 )
+from api.services.workflow.disposition_extraction import DispositionExtractionService
 from api.services.workflow.dto import ReactFlowDTO
 from api.services.workflow.initial_context import merge_external_initial_context
 from api.services.workflow.pipecat_engine import (
@@ -447,25 +448,33 @@ async def _wait_for_quiescence(
     response_window: _ResponseWindowState,
     runner_task: asyncio.Task,
     activity_marker: int,
+    engine: PipecatEngine | None = None,
     timeout_seconds: float = TEXT_CHAT_TURN_TIMEOUT_SECONDS,
 ) -> None:
     loop = asyncio.get_running_loop()
     deadline = loop.time() + timeout_seconds
 
     while loop.time() < deadline:
-        if runner_task.done():
+        shutdown_pending = (
+            engine is not None
+            and engine._shutdown_task is not None
+            and not engine._shutdown_task.done()
+        )
+        if runner_task.done() and not shutdown_pending:
             await runner_task
             return
 
         if (
             capture_processor.activity_count <= activity_marker
             and response_window.frontier_is_idle
+            and not shutdown_pending
         ):
             await asyncio.sleep(0.05)
             continue
 
         if (
             response_window.frontier_is_idle
+            and not shutdown_pending
             and (time.monotonic() - capture_processor.last_activity_at)
             >= TEXT_CHAT_IDLE_SETTLE_SECONDS
         ):
@@ -799,6 +808,7 @@ async def execute_text_chat_pending_turn(
                 response_window=response_window,
                 runner_task=runner_task,
                 activity_marker=opening_marker,
+                engine=engine,
             )
 
         if pending_user_message is not None:
@@ -812,8 +822,19 @@ async def execute_text_chat_pending_turn(
                 response_window=response_window,
                 runner_task=runner_task,
                 activity_marker=generation_marker,
+                engine=engine,
             )
     finally:
+        if engine._shutdown_task is not None:
+            try:
+                await asyncio.wait_for(
+                    asyncio.shield(engine._shutdown_task),
+                    timeout=FINAL_EXTRACTION_TIMEOUT_SECONDS + 2.0,
+                )
+            except Exception as shutdown_err:
+                logger.warning(
+                    f"Text chat shutdown task did not settle cleanly: {shutdown_err}"
+                )
         try:
             if not task.has_finished():
                 await task.cancel(reason=TEXT_CHAT_INTERNAL_CANCEL_REASON)
@@ -952,7 +973,14 @@ async def extract_text_chat_final_variables(
             skip_instance_constraints_for={"trigger"},
         )
         node = workflow_graph.nodes.get(current_node_id)
-        if not (node and node.extraction_enabled and node.extraction_variables):
+        run_configs = workflow_run.definition.workflow_configurations or {}
+        call_dispositions = WorkflowConfigurationDefaults.model_validate(
+            {"call_dispositions": run_configs.get("call_dispositions") or []}
+        ).call_dispositions
+        has_node_extraction = bool(
+            node and node.extraction_enabled and node.extraction_variables
+        )
+        if not has_node_extraction and not call_dispositions:
             return {}
 
         from api.services.configuration.run_model_configuration import (
@@ -963,7 +991,6 @@ async def extract_text_chat_final_variables(
         # the turn path does for every other text-chat span.
         set_current_org_id(organization_id)
 
-        run_configs = workflow_run.definition.workflow_configurations or {}
         user_config = await get_effective_ai_model_configuration_for_run(
             organization_id=organization_id,
             workflow_configurations=run_configs,
@@ -996,9 +1023,24 @@ async def extract_text_chat_final_variables(
         )
         engine._gathered_context = dict(base_checkpoint["gathered_context"])
 
+        extracted: dict[str, Any] = {}
+        refined_disposition: str | None = None
         async with asyncio.timeout(FINAL_EXTRACTION_TIMEOUT_SECONDS):
-            extracted = await engine.extract_variables_standalone(node)
-        if not extracted:
+            if has_node_extraction and node is not None:
+                extracted = (await engine.extract_variables_standalone(node)) or {}
+            if call_dispositions:
+                disposition_service = DispositionExtractionService(
+                    llm=llm,
+                    context=context,
+                    options=call_dispositions,
+                    template_context=initial_context,
+                )
+                refined_disposition = await disposition_service.extract(
+                    organization_id=organization_id,
+                    workflow_run_id=workflow_run_id,
+                )
+
+        if not extracted and not refined_disposition:
             return {}
 
         result = {
@@ -1006,13 +1048,16 @@ async def extract_text_chat_final_variables(
             for key, value in extracted.items()
             if key not in ENGINE_OWNED_CONTEXT_KEYS
         }
-        # The engine merged this turn's values into the `extracted_variables`
-        # it was seeded with. The completion write merges only at the top
-        # level, so hand back the whole sub-dict or earlier transitions' values
-        # would be dropped.
-        result["extracted_variables"] = dict(
-            (await engine.get_gathered_context()).get("extracted_variables") or {}
-        )
+        if extracted:
+            # The engine merged this turn's values into the `extracted_variables`
+            # it was seeded with. The completion write merges only at the top
+            # level, so hand back the whole sub-dict or earlier transitions' values
+            # would be dropped.
+            result["extracted_variables"] = dict(
+                (await engine.get_gathered_context()).get("extracted_variables") or {}
+            )
+        if refined_disposition:
+            result["call_disposition"] = refined_disposition
         return jsonable_encoder(result)
     except asyncio.TimeoutError:
         logger.warning(
